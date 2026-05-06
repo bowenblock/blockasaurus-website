@@ -81,6 +81,20 @@ CNAME   www   <YOUR_USER_OR_ORG>.github.io
 DNS can take 5 min to a few hours to propagate. GitHub Pages will then
 provision a free Let's Encrypt cert automatically.
 
+**GoDaddy gotchas** (learned the hard way 2026-05-01):
+- GoDaddy pre-fills a **parking A record** on `@` (e.g. `216.69.141.67`).
+  You must **delete it** — not just add the GitHub IPs alongside. Leaving
+  it causes round-robin between GitHub and parking, which breaks Let's
+  Encrypt cert validation (challenges land on the parking server which
+  doesn't know what to do).
+- Check the separate **Forwarding** section of GoDaddy DNS. If "Domain
+  Forwarding" is active, it overrides A records and redirects the apex
+  to a parking URL. Disable it.
+- Verify with `dig @<godaddy-ns> blockasaurus.com +short` (use the
+  authoritative nameserver returned by `dig blockasaurus.com NS +short`).
+  This bypasses local caches and shows what GoDaddy is actually
+  publishing right now. Should return only the 4 GitHub IPs, no extras.
+
 ### 4. Verify
 
 After DNS propagates, check:

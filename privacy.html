@@ -3,115 +3,406 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Snow Raiders — Privacy Policy</title>
+  <meta name="description" content="Blockasaurus Privacy Policy — what data we collect through our games, how we use it, and the choices you have.">
+  <meta name="theme-color" content="#0d1410">
+
+  <link rel="icon" href="assets/blockasaurus-mark.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/blockasaurus-mark.svg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+
+  <title>Privacy Policy — Blockasaurus</title>
   <link rel="stylesheet" href="_shared.css">
 </head>
 <body>
   <div class="container">
     <header class="site">
-      <div class="logo">SR</div>
-      <div>
+      <a href="index.html" class="logo" aria-label="Blockasaurus home" style="border: 0;">
+        <img src="assets/blockasaurus-mark.svg" alt="">
+      </a>
+      <div class="wordmark">
         <h1>Privacy Policy</h1>
-        <p class="subtitle">Snow Raiders · Blockasaurus</p>
+        <p class="subtitle">Blockasaurus</p>
       </div>
     </header>
 
-    <p class="muted">Last updated: April 2026</p>
+    <p class="muted">Effective date: May 6, 2026 · Last updated: May 6, 2026</p>
 
     <p>
-      This Privacy Policy describes how Blockasaurus ("we", "our", "us") collects,
-      uses, and shares your information when you use Snow Raiders (the "App").
+      This Privacy Policy explains how Blockasaurus ("Blockasaurus", "we", "us",
+      "our") collects, uses, shares, and protects information when you use our
+      mobile games and the
+      <a href="https://blockasaurus.com">blockasaurus.com</a> website
+      (together, the "Services"). It applies to all current and future
+      Blockasaurus games, including <strong>Snow Raiders</strong>, our current
+      release on the Apple App Store
+      (bundle ID <code>com.Blockasaurus.SnowRaiders</code>).
     </p>
 
-    <h2>Information we collect</h2>
-    <p>When you use the App, we may automatically collect:</p>
+    <p>
+      We are a one-person indie studio. The principles below reflect how we
+      actually build our games: we collect the minimum we need to ship a
+      working game, keep the lights on, and improve the experience. We do not
+      run our own servers, we do not maintain user accounts, and we do not
+      sell your information.
+    </p>
+
+    <h2>1. Information we collect</h2>
+
+    <h3>What we do collect</h3>
+    <p>
+      When you use our Services, the following categories of information may
+      be collected automatically by us or by the third-party SDKs listed in
+      <a href="#sdks">Section 4</a>:
+    </p>
     <ul>
-      <li>Device information (model, OS version, unique device identifiers)</li>
-      <li>Usage data (gameplay statistics, session duration, feature usage)</li>
-      <li>Advertising identifiers (IDFA on iOS, GAID on Android) for personalized ads</li>
-      <li>Crash logs and performance data</li>
-      <li>Purchase history for in-app purchases (processed by Apple or Google)</li>
+      <li><strong>Device and technical data.</strong> Device model, operating
+        system version, app version, language, country, time zone, screen
+        resolution, graphics quality setting, and crash diagnostics.</li>
+      <li><strong>App-assigned identifiers.</strong> The Identifier for
+        Vendors (IDFV) on iOS and the Android ID on Android. These identify
+        an installation of the app on a device, not you personally, and reset
+        if you uninstall and reinstall.</li>
+      <li><strong>Advertising identifiers.</strong> The Identifier for
+        Advertisers (IDFA) on iOS and the Google Advertising ID (GAID) on
+        Android. These are only used if you have granted the relevant
+        permissions on your device. See <a href="#choices">Section 7</a>.</li>
+      <li><strong>Gameplay events.</strong> Events such as starting a level,
+        completing or failing a level, equipping a hat, purchasing an upgrade,
+        completing a quest, watching a rewarded ad, completing the first-time
+        user tutorial, and changing graphics quality. Each event includes
+        contextual fields such as level number, level name, run duration,
+        distance, and lifetime number of runs.</li>
+      <li><strong>Aggregate progression data.</strong> Lifetime run count and
+        graphics quality stored as user properties for analytics segmentation.</li>
+      <li><strong>Purchase metadata.</strong> Product identifier (for example,
+        <code>com.Blockasaurus.SnowRaiders.gems.medium</code>), localized
+        price, and currency code for each in-app purchase. The actual payment
+        is processed by Apple or Google; we never see your card number.</li>
+      <li><strong>Advertising revenue data.</strong> When the Google AdMob
+        SDK reports the value of an ad impression, that value (in micros) and
+        currency are recorded so Firebase can calculate lifetime revenue.</li>
+      <li><strong>Crash reports.</strong> Stack traces, breadcrumb logs, and
+        device state captured at the moment of a crash, used to find and fix
+        bugs.</li>
+    </ul>
+
+    <h3>What we do not collect</h3>
+    <p>
+      Our games do not ask for, and we do not receive, any of the following:
+    </p>
+    <ul>
+      <li>Your name, email address, phone number, or postal address</li>
+      <li>Your contacts, photos, microphone, or camera</li>
+      <li>Your precise (GPS) location</li>
+      <li>Your health, fitness, or biometric data</li>
+      <li>Any account login credentials or social-network identity</li>
+      <li>Payment card details — these are handled entirely by Apple and Google</li>
     </ul>
     <p>
-      We do not ask for, or collect, your name, email address, contacts, photos,
-      precise location, or any other personally identifying data. The App does
-      not require an account.
+      Our games do not require an account. Your progress is stored on your
+      device.
     </p>
 
-    <h2>How we use your information</h2>
+    <h2>2. How we use the information</h2>
+    <p>We use the information described above only for the following purposes:</p>
     <ul>
-      <li>Provide, maintain, and improve the App</li>
-      <li>Monitor and analyze usage patterns and trends</li>
-      <li>Deliver relevant advertisements (subject to your consent on iOS and in the EEA)</li>
-      <li>Detect, investigate, and prevent fraud and abuse</li>
-      <li>Comply with legal obligations</li>
+      <li>Operate, maintain, and improve our games and website</li>
+      <li>Diagnose crashes and fix bugs (see <a href="#crashlytics">Section 4 — Crashlytics</a>)</li>
+      <li>Analyze how players engage with our games so we can balance levels, identify drop-off points, and prioritize fixes</li>
+      <li>Calculate lifetime revenue from in-app purchases and ad impressions, so we can understand whether our games are sustainable</li>
+      <li>Serve relevant advertisements through Google AdMob (subject to your consent on iOS and in the EEA, UK, and Switzerland)</li>
+      <li>Detect, investigate, and prevent fraud, abuse, and security incidents</li>
+      <li>Comply with our legal obligations</li>
     </ul>
 
-    <h2>Sharing your information</h2>
-    <p>We may share information with:</p>
+    <h2>3. Legal bases for processing (EEA, UK, Switzerland)</h2>
+    <p>
+      If you are in the European Economic Area, the United Kingdom, or
+      Switzerland, we rely on the following legal bases under the GDPR / UK
+      GDPR:
+    </p>
     <ul>
-      <li>Analytics providers (Google Firebase, Firebase Crashlytics)</li>
-      <li>Advertising partners (Google AdMob)</li>
-      <li>Platform providers (Apple App Store, Google Play, Apple Game Center, Google Play Games)</li>
-      <li>Service providers who help operate the App under confidentiality obligations</li>
+      <li><strong>Consent</strong> for personalized advertising, advertising
+        identifiers, and analytics events. You provide this through Google's
+        UMP consent form on first launch, and you can change your mind at any
+        time via <strong>Settings → Privacy Options</strong> inside the game.</li>
+      <li><strong>Legitimate interests</strong> for crash reporting, security,
+        and fraud prevention. Crash reports do not contain content that
+        identifies you and are essential to keeping the game stable.</li>
+      <li><strong>Performance of a contract</strong> for processing in-app
+        purchases.</li>
+      <li><strong>Legal obligation</strong> where the law requires us to
+        retain or disclose data.</li>
     </ul>
-    <p>We do not sell your personal information.</p>
 
-    <h2>Your choices</h2>
+    <h2 id="sdks">4. Third-party SDKs and service providers</h2>
     <p>
-      On iOS 14.5 and later, the first launch asks whether to allow tracking.
-      If you decline, advertising identifiers are not used for personalized ads.
-    </p>
-    <p>
-      In the European Economic Area, the United Kingdom, and Switzerland, a
-      Google UMP consent form appears on first launch. You can revisit your
-      consent at any time by opening <strong>Settings → Privacy Options</strong>
-      inside the App.
-    </p>
-    <p>
-      You may also disable ad personalization through your device's system
-      settings (iOS: Settings → Privacy &amp; Security → Apple Advertising;
-      Android: Settings → Google → Ads).
+      We rely on the following third parties to provide pieces of
+      functionality. Each operates under its own privacy policy, and you
+      should review the ones that matter to you. We do not control how these
+      third parties process your data once it leaves our app.
     </p>
 
-    <h2>Data retention</h2>
+    <h3>Google Firebase Analytics</h3>
     <p>
-      Analytics and diagnostic data is retained for up to 14 months. Purchase
-      receipts are retained by the platform store (Apple or Google) according
-      to their policies.
+      Used to measure aggregate gameplay behavior, balance levels, and
+      calculate lifetime revenue. Receives the gameplay events listed in
+      Section 1, plus the IDFV/Android ID and (with consent) the IDFA/GAID.
+      Analytics collection is automatically disabled in our app if you
+      decline tracking on iOS or decline analytics consent in the EEA.
+      <br><a href="https://firebase.google.com/support/privacy">Firebase privacy and security</a>
+      ·
+      <a href="https://policies.google.com/privacy">Google privacy policy</a>
     </p>
 
-    <h2>Children's privacy</h2>
+    <h3 id="crashlytics">Google Firebase Crashlytics</h3>
     <p>
-      The App is not directed to children under 13. We do not knowingly collect
-      personal information from children under 13. If you believe a child under
-      13 has provided us with information, please contact us and we will delete
-      it.
+      Used to capture crash reports so we can fix bugs. Crash reports include
+      a stack trace, recent breadcrumb logs (level state, FTUE step), and
+      device state. They do not include the contents of your saved progress,
+      photos, or any data you have entered. Crashlytics is enabled regardless
+      of your tracking choice because we treat crash diagnostics as a
+      legitimate interest essential to app stability. If you object to this,
+      contact us and we will work with you on an alternative.
+      <br><a href="https://firebase.google.com/support/privacy">Firebase privacy and security</a>
     </p>
 
-    <h2>International transfers</h2>
+    <h3>Google AdMob</h3>
     <p>
-      Your data may be processed in countries outside your own, including the
-      United States, under appropriate safeguards.
+      Used to serve rewarded video ads (for example, "Watch ad for triple
+      coins" at the end of a run, "Watch ad for a free gem" in the shop) and
+      occasional interstitial ads. AdMob may use the IDFA/GAID to serve
+      personalized ads. If you decline tracking on iOS, or decline
+      personalized ads via the EEA consent form, AdMob serves
+      contextual (non-personalized) ads instead. The "No Ads" in-app purchase
+      removes banner and interstitial ads permanently; rewarded ads remain
+      available as an opt-in reward.
+      <br><a href="https://policies.google.com/technologies/ads">How Google uses information from sites or apps that use our services</a>
+      ·
+      <a href="https://support.google.com/admob/answer/6128543">AdMob and AdSense personalized vs. non-personalized ads</a>
     </p>
 
-    <h2>Changes to this policy</h2>
+    <h3>Google User Messaging Platform (UMP)</h3>
     <p>
-      We may update this Privacy Policy from time to time. Changes take effect
-      when posted on this page. Material changes will be highlighted in-app.
+      Used to display the GDPR consent form to players in the EEA, UK, and
+      Switzerland on first launch and on demand from the in-game Privacy
+      Options screen. UMP determines your region from your IP address.
+      <br><a href="https://support.google.com/admob/answer/10113207">About the IAB Europe Transparency &amp; Consent Framework</a>
     </p>
 
-    <h2>Contact us</h2>
+    <h3>Google Firebase Remote Config</h3>
     <p>
-      For questions about this Privacy Policy, email
+      Used to remotely tune game configuration values (for example, enabling
+      or disabling interstitial ads). It does not transmit information about
+      you to us.
+    </p>
+
+    <h3>Apple StoreKit (iOS) and Apple App Tracking Transparency</h3>
+    <p>
+      Apple processes all in-app purchases on iOS. We receive only the
+      product identifier, price, and currency for each successful purchase —
+      we never see your Apple ID or payment card. App Tracking Transparency
+      is the system-level prompt that decides whether the IDFA is available
+      to our app and SDKs.
+      <br><a href="https://www.apple.com/legal/privacy/">Apple Privacy Policy</a>
+    </p>
+
+    <h3>Apple Game Center</h3>
+    <p>
+      Used to host per-level smash-score leaderboards, a global "total coins"
+      leaderboard, a "levels beaten" leaderboard, and achievements.
+      Authentication is handled by Apple using your Apple ID. We see only
+      anonymous Game Center player handles for the purpose of submitting and
+      displaying leaderboards.
+    </p>
+
+    <h3>Unity Purchasing</h3>
+    <p>
+      The Unity Purchasing SDK wraps Apple StoreKit and Google Play Billing
+      and exposes a unified API to our app. It does not send purchase data
+      to Unity Technologies in identifiable form.
+    </p>
+
+    <h2>5. How we share information</h2>
+    <p>
+      We share information only as follows:
+    </p>
+    <ul>
+      <li><strong>With the service providers listed in Section 4</strong>,
+        and only as necessary for them to perform the function they provide.</li>
+      <li><strong>With platform providers</strong> (Apple, Google) as required
+        for app distribution, in-app purchases, and platform-level services
+        such as Game Center.</li>
+      <li><strong>To comply with the law</strong>, respond to lawful requests
+        and legal process, or protect our or others' rights, property, or
+        safety.</li>
+      <li><strong>In connection with a business change</strong>, such as a
+        merger, acquisition, or asset sale. If that ever happens, we will
+        update this policy and notify users in the games.</li>
+    </ul>
+    <p>
+      <strong>We do not sell your personal information</strong> as the term
+      is defined under the California Consumer Privacy Act (CCPA) or
+      analogous laws.
+    </p>
+
+    <h2>6. International data transfers</h2>
+    <p>
+      Blockasaurus is based in British Columbia, Canada. Most of our service
+      providers are based in the United States. By using our Services, you
+      understand that your information may be transferred to, stored, and
+      processed in Canada, the United States, and other countries where our
+      service providers operate, under appropriate safeguards required by
+      applicable law (such as standard contractual clauses for transfers out
+      of the EEA).
+    </p>
+
+    <h2 id="choices">7. Your choices</h2>
+
+    <h3>iOS App Tracking Transparency</h3>
+    <p>
+      The first time you launch one of our games on iOS 14.5 or later, the
+      system shows Apple's tracking prompt. If you decline, the IDFA is not
+      shared with our app and personalized ads are not served.
+    </p>
+
+    <h3>EEA, UK, and Switzerland — GDPR consent form</h3>
+    <p>
+      The first time you launch one of our games in the EEA, UK, or
+      Switzerland, Google's UMP consent form appears. You can grant or
+      decline consent for personalized advertising. You can re-open this
+      form at any time by going to <strong>Settings → Privacy Options</strong>
+      inside the game.
+    </p>
+
+    <h3>Device-level controls</h3>
+    <ul>
+      <li><strong>iOS:</strong> Settings → Privacy &amp; Security → Apple
+        Advertising → toggle Personalized Ads, or Settings → Privacy &amp;
+        Security → Tracking → toggle per-app permissions.</li>
+      <li><strong>Android:</strong> Settings → Google → Ads → Reset
+        advertising ID, or Delete advertising ID.</li>
+    </ul>
+
+    <h3>Restore purchases</h3>
+    <p>
+      To move non-consumable purchases (such as "No Ads") to a new device,
+      sign in with the same Apple ID and tap <strong>Restore Purchases</strong>
+      in the in-game Shop.
+    </p>
+
+    <h3>Uninstall</h3>
+    <p>
+      Uninstalling the game from your device stops all future data
+      collection by us and our SDKs from that installation.
+    </p>
+
+    <h2>8. Your rights</h2>
+
+    <h3>EEA, UK, and Switzerland (GDPR / UK GDPR)</h3>
+    <p>
+      You have the right to: access the information we hold about you;
+      request correction or deletion; restrict or object to processing;
+      receive your information in a portable format; and withdraw consent at
+      any time. To exercise any of these rights, email
       <a href="mailto:support@blockasaurus.com">support@blockasaurus.com</a>.
+      Because we do not maintain user accounts and do not collect personal
+      identifiers, we may need to ask for the IDFV/Android ID associated
+      with your installation to find any data tied to it. You also have the
+      right to lodge a complaint with your local data protection authority.
+    </p>
+
+    <h3>California (CCPA / CPRA)</h3>
+    <p>
+      California residents have the right to know what personal information
+      we collect, to request deletion, to correct inaccurate information,
+      and to opt out of "sales" or "sharing" of personal information. We do
+      not sell personal information. To exercise your rights, email
+      <a href="mailto:support@blockasaurus.com">support@blockasaurus.com</a>.
+      We will not discriminate against you for exercising your rights.
+    </p>
+
+    <h3>Other jurisdictions</h3>
+    <p>
+      Where applicable law gives you additional rights — for example, under
+      Canada's PIPEDA, Brazil's LGPD, or other privacy regimes — we will
+      honor those rights. Email
+      <a href="mailto:support@blockasaurus.com">support@blockasaurus.com</a>
+      to make a request.
+    </p>
+
+    <h2>9. Children's privacy</h2>
+    <p>
+      Blockasaurus games are not directed to children under 13. We do not
+      knowingly collect personal information from children under 13. Snow
+      Raiders is rated 4+ on the App Store for mild cartoon action; the
+      rating reflects the absence of adult content, not a target audience.
+      Children's apps under Apple's "Made for Kids" or Google Play's
+      "Designed for Families" categories are not part of our current
+      catalog.
+    </p>
+    <p>
+      If you are a parent or guardian and you believe a child under 13 has
+      provided us with information, please contact us at
+      <a href="mailto:support@blockasaurus.com">support@blockasaurus.com</a>
+      and we will delete it. We also encourage parents to use device-level
+      controls (
+      <a href="https://support.apple.com/en-us/HT201304">Apple Screen Time</a>,
+      Google Family Link
+      ) to manage in-app purchases and ads.
+    </p>
+
+    <h2>10. Data retention</h2>
+    <p>
+      We retain analytics and crash diagnostic data for up to 14 months
+      under Firebase's default retention setting, after which it is
+      automatically deleted by Google. Aggregated, non-identifiable data
+      (such as a count of how many players reached a level) may be retained
+      longer because it cannot be traced back to any individual.
+    </p>
+    <p>
+      Purchase receipts and Game Center data are retained by Apple or
+      Google according to their own policies, not ours.
+    </p>
+
+    <h2>11. Security</h2>
+    <p>
+      We rely on the platform-level security of Apple, Google, and Firebase
+      for data we transmit and store. No method of transmission or storage
+      is perfectly secure, but we choose providers with strong security
+      practices and limit the amount of data we collect to what we actually
+      need.
+    </p>
+
+    <h2>12. Changes to this policy</h2>
+    <p>
+      We may update this Privacy Policy from time to time. The "Effective
+      date" at the top of this page reflects the most recent change. If we
+      make a material change, we will highlight it in-game on the next
+      launch and, where required, ask for renewed consent.
+    </p>
+
+    <h2>13. Contact us</h2>
+    <p>
+      Blockasaurus<br>
+      British Columbia, Canada<br>
+      <a href="mailto:support@blockasaurus.com">support@blockasaurus.com</a>
+    </p>
+    <p>
+      For privacy-specific requests, please put "Privacy" in the subject
+      line so we can prioritize.
     </p>
 
     <footer class="site">
-      <a href="index.html">Home</a> ·
-      <a href="terms.html">Terms of Use</a> ·
-      <a href="support.html">Support</a>
-      <p>© 2026 Blockasaurus. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="terms.html">Terms of Use</a>
+        <a href="support.html">Support</a>
+      </div>
+      <p class="copyright">© 2026 Blockasaurus. All rights reserved.</p>
     </footer>
   </div>
 </body>

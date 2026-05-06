@@ -3,59 +3,93 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Snow Raiders — slingshot your sled down 10 mountain levels. Smash trees, trucks, boulders and ancient temples. Free physics runner from Blockasaurus.">
-  <title>Snow Raiders — Blockasaurus</title>
+  <meta name="description" content="Blockasaurus — an indie game studio making chunky, physics-driven games with big personality. Makers of Snow Raiders.">
+  <meta name="theme-color" content="#0d1410">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Blockasaurus">
+  <meta property="og:description" content="An indie studio making chunky, physics-driven games.">
+  <meta property="og:image" content="https://blockasaurus.com/assets/blockasaurus-hero.png">
+  <meta property="og:url" content="https://blockasaurus.com/">
+
+  <link rel="icon" href="assets/blockasaurus-mark.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/blockasaurus-mark.svg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+
+  <title>Blockasaurus</title>
   <link rel="stylesheet" href="_shared.css">
 </head>
 <body>
   <div class="container">
     <header class="site">
-      <div class="logo">SR</div>
-      <div>
-        <h1>Snow Raiders</h1>
-        <p class="subtitle">Roll, smash, surf the slopes.</p>
+      <div class="logo">
+        <img src="assets/blockasaurus-mark.svg" alt="">
+      </div>
+      <div class="wordmark">
+        <h1>Blockasaurus</h1>
+        <p class="subtitle">Indie game studio</p>
       </div>
     </header>
 
-    <section>
-      <p>
-        Slingshot your sled into the slopes and become the fastest snow raider
-        on the mountain. Ten unique levels, twenty unlockable hats, and pure
-        physics-driven chaos.
-      </p>
-      <a class="cta" href="https://apps.apple.com/app/id6761855643">Download on the App Store</a>
+    <section class="hero" aria-labelledby="hero-title">
+      <img src="assets/blockasaurus-hero.png"
+           alt="The Blockasaurus mascot — a friendly blocky T-rex on a sunset hill."
+           width="1366" height="768">
+      <div class="hero-overlay">
+        <span class="eyebrow">Hello, friend</span>
+        <h1 id="hero-title" class="display">We make chunky, physics-driven games.</h1>
+        <p class="tagline">
+          Blockasaurus is a tiny indie studio building bold, blocky games with
+          big personality. Push, pull, smash, and slide — our world is built
+          out of cubes and chaos.
+        </p>
+      </div>
     </section>
 
-    <section class="panel">
-      <h2>Ten mountains, ten mechanics</h2>
-      <ul>
-        <li><strong>Bunny Slope</strong> — learn the ropes on gentle powder.</li>
-        <li><strong>Timber Run</strong> — dodge logging trucks or crush them for coins.</li>
-        <li><strong>Glacier Peak</strong> — slip across icy walkways and frozen lakes.</li>
-        <li><strong>Serpent Pass</strong> — hug the inside line or fall off the cliff.</li>
-        <li><strong>Avalanche Alley</strong> — outrun launching boulders.</li>
-        <li><strong>Lunar Surface</strong> — float through low gravity and leap craters.</li>
-        <li><strong>Stone Temple</strong> — smash through ancient pillar gates.</li>
-        <li><strong>Flame Temple</strong> — dodge bursting fire traps.</li>
-        <li><strong>Water Temple</strong> — ride bridges over deep lakes and crashing waves.</li>
-        <li><strong>Sky Temple</strong> — survive sky drops off floating platforms.</li>
-      </ul>
+    <div class="voxel-strip" aria-hidden="true"></div>
+
+    <section aria-labelledby="games-title">
+      <h2 id="games-title">Our games</h2>
+
+      <div class="game-card">
+        <div class="art" aria-hidden="true">SR</div>
+        <div class="body">
+          <h3>Snow Raiders</h3>
+          <p>
+            Slingshot a snowball-rolling sled down ten mountains. Smash trees,
+            trucks, boulders, and ancient temples. Free physics runner for
+            iPhone and iPad.
+          </p>
+          <div class="cta-row">
+            <a class="cta" href="https://apps.apple.com/app/id6761855643">Download on App Store</a>
+            <a class="cta ghost" href="support.html">Support &amp; FAQ</a>
+          </div>
+          <p class="meta" style="margin-top: 14px;">iOS · Free · Released 2026</p>
+        </div>
+      </div>
     </section>
 
-    <section>
-      <h2>Support</h2>
+    <section aria-labelledby="studio-title">
+      <h2 id="studio-title">About the studio</h2>
       <p>
-        Need help? Have feedback? Email
-        <a href="mailto:support@blockasaurus.com">support@blockasaurus.com</a>
-        or visit the <a href="support.html">support page</a>.
+        Blockasaurus is a one-person operation building games on nights and
+        weekends. We like simple controls, satisfying physics, and worlds that
+        feel hand-built. If you have feedback, bug reports, or just want to
+        say hi, drop us a line at
+        <a href="mailto:hello@blockasaurus.com">hello@blockasaurus.com</a>.
       </p>
     </section>
 
     <footer class="site">
-      <a href="privacy.html">Privacy Policy</a> ·
-      <a href="terms.html">Terms of Use</a> ·
-      <a href="support.html">Support</a>
-      <p>© 2026 Blockasaurus. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Use</a>
+        <a href="support.html">Support</a>
+      </div>
+      <p class="copyright">© 2026 Blockasaurus. All rights reserved.</p>
     </footer>
   </div>
 </body>
