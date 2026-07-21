@@ -1,0 +1,1021 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex,nofollow" />
+<title>CRUX CUBES — Builder</title>
+<meta name="description" content="Build in 3D with the Crux Cubes system, then send it straight to your basket." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Exo+2:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#15171A; --panel:#1E2125; --gunmetal:#2A2D33; --slate:#333840;
+    --line:rgba(255,255,255,.09); --line-strong:rgba(255,255,255,.16);
+    --teal:#22B5A0; --teal-dim:#178571;
+    --text:#E8EAE6; --muted:#8C949B; --code:#7FB8AE;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:"Exo 2",system-ui,sans-serif; line-height:1.55;
+    -webkit-font-smoothing:antialiased; overflow:hidden;
+  }
+  a{color:inherit; text-decoration:none}
+  h1,h2,h3{font-family:"Russo One",sans-serif; font-weight:400; margin:0}
+  .code{font-family:"Share Tech Mono",monospace; color:var(--code); font-size:.72rem; letter-spacing:.09em; text-transform:uppercase}
+  .btn{display:inline-block; font-family:"Share Tech Mono",monospace; font-size:.75rem; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--bg); background:var(--teal); padding:10px 16px; border:1px solid var(--teal);
+    cursor:pointer; transition:.15s; text-align:center}
+  .btn:hover{background:var(--teal-dim); border-color:var(--teal-dim)}
+  .btn.ghost{background:transparent; color:var(--teal)}
+  .btn.ghost:hover{background:rgba(34,181,160,.1)}
+  .btn:disabled{opacity:.35; cursor:not-allowed}
+
+  #app{position:fixed; inset:0; display:grid; grid-template-columns:236px 1fr 300px; grid-template-rows:56px 1fr}
+  header{grid-column:1/-1; display:flex; align-items:center; justify-content:space-between;
+    padding:0 18px; border-bottom:1px solid var(--line); background:rgba(21,23,26,.9); z-index:10}
+  .brand{display:flex; align-items:center; gap:10px}
+  .brand svg{width:26px; height:26px; display:block}
+  .brand .name{font-family:"Russo One",sans-serif; font-size:.95rem; letter-spacing:.16em}
+  .hdr-actions{display:flex; gap:10px; align-items:center}
+
+  aside{background:var(--panel); overflow-y:auto; display:flex; flex-direction:column}
+  #palette{border-right:1px solid var(--line)}
+  #basket{border-left:1px solid var(--line)}
+  .pane-head{padding:14px 16px 10px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:baseline}
+  .pane-body{padding:14px 16px; flex:1}
+
+  .grp{margin-bottom:6px}
+  .ghead{display:flex; align-items:center; gap:7px; width:100%; margin:14px 0 8px; padding:0;
+    background:none; border:0; cursor:pointer; text-align:left;
+    font-family:"Share Tech Mono",monospace; font-size:.72rem; letter-spacing:.09em;
+    text-transform:uppercase; color:var(--muted); transition:color .14s}
+  .grp:first-child .ghead{margin-top:0}
+  .ghead:hover{color:var(--text)}
+  .ghead .chev{display:inline-block; font-size:.6rem; color:var(--teal);
+    transition:transform .16s; transform:rotate(0deg)}
+  .ghead.open .chev{transform:rotate(90deg)}
+  .ghead .cnt{margin-left:auto; opacity:.55}
+  .gbody[hidden]{display:none}
+  .part{width:100%; text-align:left; background:var(--gunmetal); border:1px solid var(--line-strong);
+    padding:10px 11px; margin-bottom:7px; cursor:pointer; transition:.14s; color:var(--text); font-family:inherit}
+  .part:hover{border-color:var(--teal)}
+  .part.sel{border-color:var(--teal); background:rgba(34,181,160,.12)}
+  .part .pn{font-family:"Share Tech Mono",monospace; font-size:.68rem; color:var(--teal); letter-spacing:.06em;
+    display:flex; justify-content:space-between; gap:8px}
+  .part .pn .sc{color:var(--muted)}
+  .part .pd{font-size:.84rem; margin-top:3px; line-height:1.3}
+  .part .pp{font-size:.72rem; color:var(--muted); margin-top:2px}
+
+  .tool{display:flex; gap:7px; margin-bottom:4px}
+  .tool .btn{flex:1; padding:8px 4px; font-size:.68rem}
+
+  #view{position:relative; background:var(--bg)}
+  #view canvas{display:block}
+  #hint{position:absolute; left:16px; bottom:14px; pointer-events:none}
+  #hint div{margin-top:3px; color:var(--muted)}
+  #hint kbd{font-family:"Share Tech Mono",monospace; background:var(--gunmetal); border:1px solid var(--line-strong);
+    padding:1px 6px; font-size:.7rem; color:var(--text)}
+  #stats{position:absolute; right:16px; top:14px; text-align:right; pointer-events:none; color:var(--muted)}
+  #empty{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none}
+  #empty .inner{text-align:center; opacity:.5}
+  #empty h3{font-size:1.1rem; text-transform:uppercase; margin-bottom:8px}
+
+  .line{display:flex; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); font-size:.86rem}
+  .line .lq{font-family:"Share Tech Mono",monospace; color:var(--teal); min-width:34px}
+  .line .lp{color:var(--muted); font-size:.78rem}
+  .totals{padding:14px 16px; border-top:1px solid var(--line-strong); background:rgba(0,0,0,.22)}
+  .trow{display:flex; justify-content:space-between; font-size:.86rem; margin-bottom:6px}
+  .trow.big{font-size:1.05rem; margin-top:10px; padding-top:10px; border-top:1px solid var(--line)}
+  .trow.big .v{font-family:"Russo One",sans-serif; color:var(--teal)}
+  .basket-actions{padding:0 16px 16px; display:flex; flex-direction:column; gap:8px}
+  .empty-note{color:var(--muted); font-size:.85rem; padding:8px 0}
+  .warn{color:#E0A040; font-size:.78rem; margin-top:8px; line-height:1.4}
+
+  @media(max-width:1060px){
+    #app{grid-template-columns:1fr; grid-template-rows:56px 1fr auto}
+    #palette{display:none}
+    #basket{max-height:38vh; border-left:0; border-top:1px solid var(--line)}
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute"><defs>
+  <g id="cruxmark">
+    <path d="M32 4 L60 32 L32 60 L4 32 Z" fill="none" stroke="#22B5A0" stroke-width="2.4" opacity=".65"/>
+    <path d="M32 12 L32 52 M12 32 L52 32" fill="none" stroke="#22B5A0" stroke-width="9" stroke-linecap="round"/>
+  </g>
+</defs></svg>
+
+<div id="app">
+  <header>
+    <a class="brand" href="./">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#cruxmark"/></svg>
+      <span class="name">CRUX&nbsp;CUBES</span>
+      <span class="code" style="margin-left:8px; color:var(--muted)">/ BUILDER</span>
+    </a>
+    <div class="hdr-actions">
+      <span class="code" id="saved" style="color:var(--teal); opacity:0; transition:.3s">✓ LINK COPIED</span>
+      <button class="btn ghost" id="btn-share">Share Build</button>
+      <button class="btn ghost" id="btn-clear">Clear</button>
+    </div>
+  </header>
+
+  <aside id="palette">
+    <div class="pane-head"><span class="code">Parts</span><span class="code" style="color:var(--muted)">REV_02</span></div>
+    <div class="pane-body">
+      <div class="tool">
+        <button class="btn ghost" id="btn-undo" title="Undo (Cmd/Ctrl+Z)">Undo</button>
+        <button class="btn ghost" id="btn-redo" title="Redo (Cmd/Ctrl+Shift+Z)">Redo</button>
+      </div>
+      <div id="part-list"></div>
+      <div class="code" style="color:var(--muted); margin-top:16px; line-height:1.7">
+        // CLICK A SOCKET TO ATTACH<br>
+        // ORIENTATION IS AUTOMATIC<br>
+        // R CYCLES ALTERNATES
+      </div>
+    </div>
+  </aside>
+
+  <div id="view">
+    <div id="empty"><div class="inner">
+      <h3>Start your build</h3>
+      <span class="code">CLICK THE BASE PLATE — TRY A WALL MOUNT FIRST</span>
+    </div></div>
+    <div id="stats" class="code"></div>
+    <div id="hint" class="code">
+      <div><kbd>drag</kbd> orbit &nbsp; <kbd>scroll</kbd> zoom &nbsp; <kbd>right-drag</kbd> pan</div>
+      <div><kbd>R</kbd> rotate &nbsp; <kbd>shift</kbd>+click remove &nbsp; <kbd>⌘Z</kbd> undo</div>
+    </div>
+  </div>
+
+  <aside id="basket">
+    <div class="pane-head"><span class="code">Basket</span><span class="code" id="bk-count" style="color:var(--muted)">0 PARTS</span></div>
+    <div class="pane-body" id="bk-lines"><div class="empty-note">Nothing placed yet.</div></div>
+    <div class="totals" id="bk-totals"></div>
+    <div class="basket-actions">
+      <button class="btn" id="btn-cart" disabled>Add Build to Cart</button>
+      <span class="code" style="color:var(--muted); text-align:center">PRICES CAD · SHIPS FROM VANCOUVER</span>
+    </div>
+  </aside>
+</div>
+
+<script type="importmap">
+{ "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+} }
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import * as BGU from 'three/addons/utils/BufferGeometryUtils.js';
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CONFIG
+   Lattice cell = 20mm; 2x parts span 2 cells per unit. The ONLY real dimensions
+   the builder needs are the cube sizes. The connector shapes below are nominal
+   DISPLAY proportions so the parts read as the Crux cruciform — they are not
+   manufacturing dimensions and encode no fit/tolerance data.
+   ═══════════════════════════════════════════════════════════════════════ */
+const U = 20;                 // lattice cell
+const BEVEL = 0.5;
+
+// Connector display geometry, as fractions of a part's edge (works at any size).
+// Male and female share one arm width — the real parts differ by a fit
+// allowance that lives offline and is invisible at this scale anyway.
+const CONN = s => ({ arm: s*0.23, core: s*0.5, dia: s*0.51, h: s*0.1 });
+const M1 = CONN(U),    F1 = CONN(U);
+const M2 = CONN(U*2),  F2 = CONN(U*2), FW = CONN(U*2);
+const SOCKET_DEPTH = 2.4, SOCKET_LIFT = 0.06;
+const PLATE_T = 6;                                    // 2x plate visual thickness
+
+// 18 connector directions: 0-5 the cube faces, 6-17 the edge diagonals.
+// Diagonal parts (`diagonal connector*.stl`) carry a 45° wall whose normal is
+// an edge diagonal, so the 6-face model can't hold them. Indices 0-5 keep their
+// original meaning, so axis-only parts are unaffected.
+const DIRS = [
+  [ 1,0,0], [-1,0,0], [0, 1,0], [0,-1,0], [0,0, 1], [0,0,-1],
+  [ 1,0, 1], [-1,0,-1], [ 1,0,-1], [-1,0, 1],          // XZ
+  [ 1, 1,0], [-1,-1,0], [ 1,-1,0], [-1, 1,0],          // XY
+  [ 0,1, 1], [ 0,-1,-1], [ 0,1,-1], [ 0,-1, 1],        // YZ
+].map(a => new THREE.Vector3(...a).normalize());
+const OPPOSITE = [1,0,3,2,5,4, 7,6,9,8, 11,10,13,12, 15,14,17,16];
+const nearestDir = w => {
+  let best = 0, bd = -Infinity;
+  DIRS.forEach((d,i) => { const dot = d.dot(w); if (dot > bd) { bd = dot; best = i; } });
+  return best;
+};
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ORIENTATIONS — 24 cube rotations, as integer matrices
+   ═══════════════════════════════════════════════════════════════════════ */
+const ORIENTATIONS = (() => {
+  const out = [], seen = new Set(), e = new THREE.Euler(), m = new THREE.Matrix4(), H = Math.PI/2;
+  for (let x=0;x<4;x++) for (let y=0;y<4;y++) for (let z=0;z<4;z++) {
+    e.set(x*H, y*H, z*H); m.makeRotationFromEuler(e);
+    const key = m.elements.map(v => Math.round(v)).join(',');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ q: new THREE.Quaternion().setFromEuler(e.clone()), m: m.clone() });
+  }
+  return out;
+})();
+const rotVec = (v, o) => v.clone().applyMatrix4(ORIENTATIONS[o].m);
+// which direction index does local direction d point to under orientation o
+const faceUnder = ORIENTATIONS.map(o => DIRS.map(d => nearestDir(d.clone().applyMatrix4(o.m))));
+
+/* ═══════════════════════════════════════════════════════════════════════
+   GEOMETRY
+   ═══════════════════════════════════════════════════════════════════════ */
+function cruciformShape(arm, core) {
+  const h = arm/2, c = core/2, s = new THREE.Shape();
+  s.moveTo(h,-h);
+  s.lineTo(c,-h); s.absarc(c,0,h,-Math.PI/2,Math.PI/2,false);
+  s.lineTo(h,h);  s.lineTo(h,c);
+  s.absarc(0,c,h,0,Math.PI,false);
+  s.lineTo(-h,h); s.lineTo(-c,h);
+  s.absarc(-c,0,h,Math.PI/2,Math.PI*1.5,false);
+  s.lineTo(-h,-h);s.lineTo(-h,-c);
+  s.absarc(0,-c,h,Math.PI,Math.PI*2,false);
+  s.closePath();
+  return s;
+}
+// The hybrid female outline as ONE closed shape: 4 semicircular tips joined by
+// straight diagonals. Previously drawn as a cruciform mesh overlapping a diamond
+// mesh — their coplanar caps z-fought and drew a black seam across every socket.
+function hybridShape(arm, core) {
+  const h = arm/2, c = core/2, s = new THREE.Shape();
+  s.moveTo(c, -h);
+  s.absarc(c, 0, h, -Math.PI/2, Math.PI/2, false);      // +X tip
+  s.lineTo(h, c);                                       // straight diagonal
+  s.absarc(0, c, h, 0, Math.PI, false);                 // +Y tip
+  s.lineTo(-c, h);
+  s.absarc(-c, 0, h, Math.PI/2, Math.PI*1.5, false);    // -X tip
+  s.lineTo(-h, -c);
+  s.absarc(0, -c, h, Math.PI, Math.PI*2, false);        // -Y tip
+  s.closePath();                                        // final diagonal
+  return s;
+}
+// Chamfered cube — the diagonal part's body. The corner is chamfered by s/√2
+// off each adjacent axis, which lands the 45° face at exactly s × s so it
+// carries a standard connector. Pure geometry, scale-independent.
+const chamferDepth  = s => s / Math.SQRT2;
+const chamferOffset = s => (s - chamferDepth(s)) / Math.SQRT2;
+function chamferedCubeGeometry(s) {
+  const CHAMFER = chamferDepth(s);
+  const cut = s - CHAMFER;
+  const p = new THREE.Shape();
+  p.moveTo(0, 0); p.lineTo(cut, 0);
+  p.lineTo(s, CHAMFER);                         // the 45° face
+  p.lineTo(s, s); p.lineTo(0, s); p.closePath();
+  const g = new THREE.ExtrudeGeometry(p, { depth: s, bevelEnabled: false });
+  return g;                                      // spans [0,s] in x, y and z
+}
+// Rounded box via bevelled extrusion of a square profile.
+function roundedBox(w, h, d) {
+  const b = Math.min(BEVEL, w/4, h/4, d/4);
+  const hw = w/2 - b, hh = h/2 - b;
+  const sq = new THREE.Shape();
+  sq.moveTo(-hw,-hh); sq.lineTo(hw,-hh); sq.lineTo(hw,hh); sq.lineTo(-hw,hh); sq.closePath();
+  const g = new THREE.ExtrudeGeometry(sq, { depth:d-2*b, bevelEnabled:true,
+    bevelThickness:b, bevelSize:b, bevelSegments:2, curveSegments:6 });
+  g.translate(0,0,-(d-2*b)/2);
+  g.rotateX(-Math.PI/2);          // extrude axis Z -> world Y
+  return g;                        // centred on origin, height h along Y
+}
+// Per-direction orientation basis for connectors.
+// setFromUnitVectors() gives the MINIMAL rotation onto a normal, which leaves the
+// roll about that normal arbitrary — fine by luck on axis-aligned faces, but it
+// rolls connectors 45° on the edge-diagonal faces. Build an explicit basis instead
+// so a connector's arms line up with its face's edges on EVERY direction.
+const faceBasis = DIRS.map(n => {
+  const axes = [new THREE.Vector3(1,0,0), new THREE.Vector3(0,1,0), new THREE.Vector3(0,0,1)];
+  let a = axes[0], best = Infinity;                      // axis least aligned with n
+  for (const ax of axes) { const d = Math.abs(ax.dot(n)); if (d < best - 1e-9) { best = d; a = ax; } }
+  const u = new THREE.Vector3().crossVectors(a, n).normalize();
+  const v = new THREE.Vector3().crossVectors(n, u).normalize();
+  return new THREE.Matrix4().makeBasis(u, v, n);
+});
+
+// Place a face-local geometry (built in XY, extruding +Z) at world point p facing dir f.
+function toFace(geo, p, f, lift = 0) {
+  geo.applyMatrix4(faceBasis[f]);
+  const d = DIRS[f];
+  geo.translate(p.x + d.x*lift, p.y + d.y*lift, p.z + d.z*lift);
+  return geo;
+}
+function studGeoms(spec, p, f) {
+  const g = new THREE.ExtrudeGeometry(cruciformShape(spec.arm, spec.core),
+    { depth:spec.h, bevelEnabled:false, curveSegments:8 });
+  return [toFace(g, p, f)];
+}
+function socketGeoms(spec, p, f) {
+  const g = new THREE.ExtrudeGeometry(hybridShape(spec.arm, spec.core),
+    { depth:SOCKET_DEPTH, bevelEnabled:false, curveSegments:8 });
+  g.translate(0,0,-SOCKET_DEPTH);
+  return [toFace(g, p, f, SOCKET_LIFT)];
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PART DEFINITIONS
+   Local frame: min corner at (0,0,0); cells are integer 20mm offsets;
+   connectors carry a position in local mm, an outward face, kind and scale.
+   ═══════════════════════════════════════════════════════════════════════ */
+const V = (x,y,z) => new THREE.Vector3(x,y,z);
+const conn = (p, f, k, s) => ({ p, f, k, s });
+
+/* ── RETAIL PRICE (CAD) ─────────────────────────────────────────────────────
+   Final per-part retail prices only. How they are costed (machine time, rate)
+   is intentionally NOT in the shipped code — the app just needs the number to
+   show. Columns are per-unit-of-height. Update these when pricing changes. */
+const PRICE = {
+  cube1: 2.75, cube2: 10.00,          // small / large cube (any variety, incl. diagonals)
+  columnPerUnit: 3.3333,              // × height in units
+  plate4x4: 40.00, plate8x4: 80.00,   // wall mounts
+};
+
+function cubePart(scale, sideMale = []) {
+  const S = scale === 2 ? 40 : 20, c = S/2;
+  const M = scale === 2 ? M2 : M1, F = scale === 2 ? F2 : F1;
+  const cells = [];
+  const n = scale;
+  for (let i=0;i<n;i++) for (let j=0;j<n;j++) for (let k=0;k<n;k++) cells.push([i,j,k]);
+  const face = [ V(S,c,c), V(0,c,c), V(c,S,c), V(c,0,c), V(c,c,S), V(c,c,0) ];
+  const conns = face.map((p,f) => {
+    const male = f === 2 || sideMale.includes(f);
+    return conn(p, f, male ? 'm' : 'f', scale);
+  });
+  return { cells, conns, size:[S,S,S], scale, price: scale===2?PRICE.cube2:PRICE.cube1 };
+}
+
+// 2x body in natural config, with ONE side face swapped for four 1x sockets —
+// the bridge between scales. It MUST keep its 2x male top, or it could never
+// attach to anything (every join is male-into-female).
+function conversionPart() {
+  const S = 40, c = 20;
+  const cells = [];
+  for (let i=0;i<2;i++) for (let j=0;j<2;j++) for (let k=0;k<2;k++) cells.push([i,j,k]);
+  const conns = [
+    conn(V(S,c,c), 0, 'f', 2), conn(V(0,c,c), 1, 'f', 2),
+    conn(V(c,S,c), 2, 'm', 2),                    // natural 2x male top
+    conn(V(c,0,c), 3, 'f', 2),
+    conn(V(c,c,0), 5, 'f', 2),
+  ];
+  // +Z face carries a 2x2 grid of 1x females at 20mm pitch
+  for (const x of [10,30]) for (const y of [10,30]) conns.push(conn(V(x,y,S), 4, 'f', 1));
+  return { cells, conns, size:[S,S,S], scale:2, conversion:true, price: PRICE.cube2 };
+}
+
+// Column — 1×1×H in natural configuration.
+// Per the parts lexicon: a female on EVERY exterior unit-cell face, so a 1×8
+// carries 8 sockets per side face (32 total) plus a bottom female and a top
+// male. That "attach anywhere" socket density is the whole point of the part.
+function columnPart(h, scale = 1) {
+  const S = 20 * scale, c = S/2, H = S * h;
+  const cells = [];
+  for (let k=0;k<h;k++) for (let i=0;i<scale;i++) for (let j=0;j<scale;j++) cells.push([i,k*scale+0,j]);
+  const conns = [
+    conn(V(c, H, c), 2, 'm', scale),               // male top
+    conn(V(c, 0, c), 3, 'f', scale),               // female bottom
+  ];
+  for (let k=0;k<h;k++) {
+    const y = k*S + c;
+    conns.push(conn(V(S, y, c), 0, 'f', scale));   // +X
+    conns.push(conn(V(0, y, c), 1, 'f', scale));   // -X
+    conns.push(conn(V(c, y, S), 4, 'f', scale));   // +Z
+    conns.push(conn(V(c, y, 0), 5, 'f', scale));   // -Z
+  }
+  return { cells, conns, size:[S,H,S], dims:[S,H,S], scale, column:true,
+           price: +(h * PRICE.columnPerUnit).toFixed(2) };
+}
+
+// Diagonal connector, from `diagonal connector 4.5_fixed.stl`.
+// Measured: 20mm cell + ~2mm male stud on top; the 45° face's normal is an EDGE
+// diagonal (DIR 12 = (1,-1,0)/√2 here), and the chamfer puts that face at
+// CHAMFER_OFFSET = 4.142mm out from the cell centre.
+//
+// ALIGNMENT (why diagonal panels differ): the chamfer keeps each diagonal face
+// at 20mm, but consecutive diagonal cells along the in-plane run sit 20√2 =
+// 28.284mm apart. So sockets on a diagonal surface are at 28.284mm pitch along
+// the slope while staying at 20mm across it — a cover panel CANNOT reuse the
+// flat 20mm male grid. See DIAG_PITCH.
+// Along-slope socket pitch — √2 × the cell, so it scales with the part:
+//   1× -> 28.284mm   2× -> 56.569mm   (vs a flat 20 / 40mm grid across the slope)
+const diagPitch = scale => U * scale * Math.SQRT2;
+//
+// The part Bo has actually printed carries THREE connectors: a female on the
+// hypotenuse (that face prints flat on the base plate), a female on -X, and one
+// male on top. The chamfer eats the +X and -Y faces down to 5.858mm, so those
+// two can't carry anything.
+//   sideMale = true -> the 2-male / 1-hypotenuse-female variant (website only
+//   for now; the physical part gets modelled later).
+function diagonalPart(scale = 1, sideMale = false) {
+  const S = 20 * scale, c = S/2;
+  const n = DIRS[12];                            // (1,-1,0)/√2 — the chamfer normal
+  const face = V(c,c,c).addScaledVector(n, chamferOffset(S));
+  const cells = [];
+  for (let i=0;i<scale;i++) for (let j=0;j<scale;j++) for (let k=0;k<scale;k++) cells.push([i,j,k]);
+  return {
+    cells,
+    conns: [
+      conn(face, 12, 'f', scale),                     // hypotenuse female (prints on the plate)
+      conn(V(c,S,c), 2, 'm', scale),                  // male stud on top
+      conn(V(0,c,c), 1, sideMale ? 'm' : 'f', scale), // -X
+    ],
+    size:[S,S,S], scale, chamfered:true, price: scale===2?PRICE.cube2:PRICE.cube1,
+  };
+}
+
+// 2x wall-mount plate. `quincunx` adds the interstitial socket set offset
+// half a 2x unit (20mm) in both axes — the 16s->25s / 32s->53s jump.
+function platePart(uw, uh, quincunx) {
+  const W = uw*40, H = uh*40;
+  // Cell triples are read as (x,y,z) — same frame as `conns` and the geometry.
+  // The plate spans X (width) and Y (height) and is one cell deep in Z, with
+  // sockets facing +Z. Laying these out in X-Z instead silently desynced
+  // occupancy from the mesh.
+  const cells = [];
+  for (let i=0;i<uw*2;i++) for (let j=0;j<uh*2;j++) cells.push([i,j,0]);
+  const pts = [];
+  for (let a=0;a<uw;a++) for (let b=0;b<uh;b++) pts.push([a*40+20, b*40+20]);
+  if (quincunx) for (let a=1;a<uw;a++) for (let b=1;b<uh;b++) pts.push([a*40, b*40]);
+  // plate sits flush with the FRONT of its cell layer so parts butt against it
+  const conns = pts.map(([x,y]) => conn(V(x,y,U), 4, 'f', 2));
+  return { cells, conns, size:[W,H,PLATE_T], scale:2, plate:true, socketCount:pts.length,
+           price: (uw===8?PRICE.plate8x4:PRICE.plate4x4) };
+}
+
+const PARTS = {
+  'CX-1N':  { group:'Cubes — 1× (20mm)', name:'Cube — Natural', desc:'Male top, sockets on five faces',
+              ...cubePart(1) },
+  'CX-1D':  { group:'Cubes — 1× (20mm)', name:'Cube — Dual Male', desc:'Male top + male side',
+              ...cubePart(1,[0]) },
+  'COL-2':  { group:'Columns — 1× (20mm)', name:'Column 1×1×2', desc:'20×40mm · sockets on every unit face',
+              ...columnPart(2) },
+  'COL-4':  { group:'Columns — 1× (20mm)', name:'Column 1×1×4', desc:'20×80mm · sockets on every unit face',
+              ...columnPart(4) },
+  'COL-8':  { group:'Columns — 1× (20mm)', name:'Column 1×1×8', desc:'20×160mm · sockets on every unit face',
+              ...columnPart(8) },
+  'DG-1':   { group:'Diagonals — 1× (20mm)', name:'Diagonal Connector', desc:'45° face socket + side socket, male top',
+              ...diagonalPart(1, false) },
+  'DG-1D':  { group:'Diagonals — 1× (20mm)', name:'Diagonal — Dual Male', desc:'Hypotenuse socket, male top + male side',
+              ...diagonalPart(1, true) },
+  'DG-2':   { group:'Diagonals — 2× (40mm)', name:'Large Diagonal', desc:'40mm unit — hypotenuse + side socket, male top',
+              ...diagonalPart(2, false) },
+  'DG-2D':  { group:'Diagonals — 2× (40mm)', name:'Large Diagonal — Dual Male', desc:'40mm unit — hypotenuse socket, male top + male side',
+              ...diagonalPart(2, true) },
+  'CX-2N':  { group:'Cubes — 2× (40mm)', name:'Large Cube — Natural', desc:'40mm unit, male top',
+              ...cubePart(2) },
+  'CX-2D':  { group:'Cubes — 2× (40mm)', name:'Large Cube — Dual Male', desc:'40mm unit, male top + side',
+              ...cubePart(2,[0]) },
+  'CX-CONV':{ group:'Cubes — 2× (40mm)', name:'Conversion Cube', desc:'2× body, four 1× sockets on top — bridges the scales',
+              ...conversionPart() },
+  'WM-4x4':  { group:'Wall Mounts — 2×', name:'Wall Mount 4×4', desc:'160×160mm · 16 sockets',
+              ...platePart(4,4,false) },
+  'WM-4x4Q': { group:'Wall Mounts — 2×', name:'Wall Mount 4×4 Quincunx', desc:'160×160mm · 25 sockets',
+              ...platePart(4,4,true) },
+  'WM-8x4':  { group:'Wall Mounts — 2×', name:'Wall Mount 8×4', desc:'320×160mm · 32 sockets',
+              ...platePart(8,4,false) },
+  'WM-8x4Q': { group:'Wall Mounts — 2×', name:'Wall Mount 8×4 Quincunx', desc:'320×160mm · 53 sockets',
+              ...platePart(8,4,true) },
+};
+// Every price is DERIVED from print time — never set one by hand.
+const PART_IDS = Object.keys(PARTS);
+let selectedPart = 'WM-4x4';
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ORIENTED PART CACHE
+   Rotating a multi-cell part: rotate cell CENTRES and connector points about
+   the same origin, then renormalise so the min cell centre sits at (10,10,10).
+   Keeps cells integral and connectors consistent with them.
+   ═══════════════════════════════════════════════════════════════════════ */
+const oriented = new Map();
+function orientPart(id, o) {
+  const key = id + ':' + o;
+  if (oriented.has(key)) return oriented.get(key);
+  const def = PARTS[id];
+  const centres = def.cells.map(([i,j,k]) => rotVec(V(i*U+U/2, j*U+U/2, k*U+U/2), o));
+  const min = centres.reduce((m,c) => V(Math.min(m.x,c.x), Math.min(m.y,c.y), Math.min(m.z,c.z)),
+                             V(Infinity,Infinity,Infinity));
+  const shift = V(min.x - U/2, min.y - U/2, min.z - U/2);
+  const cells = centres.map(c => [ Math.round((c.x-shift.x-U/2)/U),
+                                   Math.round((c.y-shift.y-U/2)/U),
+                                   Math.round((c.z-shift.z-U/2)/U) ]);
+  const conns = def.conns.map(c => {
+    const p = rotVec(c.p, o).sub(shift);
+    return { p, f: faceUnder[o][c.f], k:c.k, s:c.s };
+  });
+  const val = { cells, conns };
+  oriented.set(key, val);
+  return val;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════════════════ */
+let state = [];                       // [{ id, cell:[i,j,k] (min corner), orient }]
+let undoStack = [], redoStack = [];   // never name these `history` — shadows window.history
+let ghostIdx = 0;
+
+const ck = c => c.join(',');
+const originMM = ([i,j,k]) => V(i*U, k*U, j*U);   // grid j -> world Z, k -> world Y
+
+function worldCells(p) {
+  return orientPart(p.id, p.orient).cells.map(([a,b,c]) => [p.cell[0]+a, p.cell[1]+c, p.cell[2]+b]);
+}
+function worldConns(p) {
+  const o = originMM(p.cell);
+  return orientPart(p.id, p.orient).conns.map(c => ({
+    p: c.p.clone().add(o), f:c.f, k:c.k, s:c.s
+  }));
+}
+function occupancy(list = state) {
+  const m = new Map();
+  list.forEach((p,i) => worldCells(p).forEach(c => m.set(ck(c), i)));
+  return m;
+}
+function connIndex(list = state) {
+  const m = new Map();
+  list.forEach((p,i) => worldConns(p).forEach(c =>
+    m.set(`${Math.round(c.p.x)},${Math.round(c.p.y)},${Math.round(c.p.z)},${c.f}`, { ...c, owner:i })));
+  return m;
+}
+const connKey = (p,f) => `${Math.round(p.x)},${Math.round(p.y)},${Math.round(p.z)},${f}`;
+
+function commit(next) {
+  undoStack.push(JSON.stringify(state));
+  if (undoStack.length > 120) undoStack.shift();
+  redoStack.length = 0;
+  state = next; rebuild(); syncUI();
+}
+function undo(){ if(!undoStack.length) return; redoStack.push(JSON.stringify(state));
+  state = JSON.parse(undoStack.pop()); rebuild(); syncUI(); }
+function redo(){ if(!redoStack.length) return; undoStack.push(JSON.stringify(state));
+  state = JSON.parse(redoStack.pop()); rebuild(); syncUI(); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PLACEMENT — solve for the origin that lands a mating connector on target
+   ═══════════════════════════════════════════════════════════════════════ */
+function candidatesFor(id, target, occ, conns) {
+  // target: { p (world), f } — an existing exposed connector we want to mate with
+  const out = [], seenSig = new Set();
+  const want = OPPOSITE[target.f];
+  for (let o = 0; o < ORIENTATIONS.length; o++) {
+    const op = orientPart(id, o);
+    for (const c of op.conns) {
+      if (c.f !== want || c.s !== target.s) continue;
+      if (!((c.k === 'm' && target.k === 'f') || (c.k === 'f' && target.k === 'm'))) continue;
+      // origin so that this connector lands exactly on the target point
+      const ox = target.p.x - c.p.x, oy = target.p.y - c.p.y, oz = target.p.z - c.p.z;
+      if (Math.abs(ox/U - Math.round(ox/U)) > 1e-6) continue;
+      if (Math.abs(oy/U - Math.round(oy/U)) > 1e-6) continue;
+      if (Math.abs(oz/U - Math.round(oz/U)) > 1e-6) continue;
+      const cell = [Math.round(ox/U), Math.round(oz/U), Math.round(oy/U)];
+      const cand = { id, cell, orient:o };
+      if (!fits(cand, occ, conns)) continue;
+      const sig = ck(cell) + '|' + op.conns.map(c2 => `${Math.round(c2.p.x)},${Math.round(c2.p.y)},${Math.round(c2.p.z)},${c2.f},${c2.k}${c2.s}`).join(';');
+      if (seenSig.has(sig)) continue;
+      seenSig.add(sig);
+      out.push(cand);
+    }
+  }
+  return out;
+}
+// No cell overlap, no connector clashing head-on with an incompatible one.
+function fits(cand, occ, conns) {
+  for (const c of worldCells(cand)) if (occ.has(ck(c))) return false;
+  if (cand.cell[2] < 0) return false;                        // never below the base plate
+  for (const c of worldConns(cand)) {
+    const other = conns.get(connKey(c.p, OPPOSITE[c.f]));
+    if (!other) continue;
+    // ONLY two male studs are a genuine physical clash — they'd occupy the same
+    // gap. Everything else may sit face to face perfectly well; it simply
+    // doesn't connect. In particular female-to-female must be allowed, or you
+    // can't close a 2×2 of natural cubes: the fourth cube mates its single male
+    // into one neighbour and necessarily meets the other female-to-female.
+    // (Cross-scale contact is likewise fine — it just won't join.)
+    if (other.k === 'm' && c.k === 'm') return false;
+  }
+  return true;
+}
+function joinCount(cand, conns) {
+  let n = 0;
+  for (const c of worldConns(cand)) {
+    const other = conns.get(connKey(c.p, OPPOSITE[c.f]));
+    if (other && other.s === c.s && other.k !== c.k) n++;
+  }
+  return n;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SCENE
+   ═══════════════════════════════════════════════════════════════════════ */
+const view = document.getElementById('view');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x15171A);
+scene.fog = new THREE.Fog(0x15171A, 700, 2000);
+
+const camera = new THREE.PerspectiveCamera(42, 1, 1, 6000);
+camera.position.set(230, 200, 280);
+
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+view.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = .08;
+controls.minDistance = 50; controls.maxDistance = 2200;
+controls.maxPolarAngle = Math.PI * 0.495;
+controls.target.set(60, 60, 20);
+
+scene.add(new THREE.HemisphereLight(0xBFD8E0, 0x1A1D20, 1.5));
+const key = new THREE.DirectionalLight(0xFFF4E6, 2.1);
+key.position.set(220, 380, 200);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+const S = 480;
+key.shadow.camera.near = 20; key.shadow.camera.far = 1400;
+key.shadow.camera.left = -S; key.shadow.camera.right = S;
+key.shadow.camera.top = S;   key.shadow.camera.bottom = -S;
+key.shadow.camera.updateProjectionMatrix();
+key.shadow.bias = -0.0012;
+scene.add(key);
+const rim = new THREE.DirectionalLight(0x22B5A0, .5);
+rim.position.set(-180, 90, -200);
+scene.add(rim);
+
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(6000,6000), new THREE.ShadowMaterial({ opacity:.34 }));
+ground.rotation.x = -Math.PI/2; ground.receiveShadow = true;
+scene.add(ground);
+
+const grid = new THREE.GridHelper(U*100, 100, 0x22B5A0, 0x3E474D);
+grid.material.transparent = true; grid.material.opacity = .5;
+grid.position.y = 0.05;
+scene.add(grid);
+
+const MAT_BODY   = new THREE.MeshStandardMaterial({ color:0x22B5A0, roughness:.62, metalness:.04 });
+const MAT_PLATE  = new THREE.MeshStandardMaterial({ color:0x2E3A40, roughness:.78, metalness:.05 });
+const MAT_SOCKET = new THREE.MeshStandardMaterial({ color:0x0C2B27, roughness:.95, metalness:0,
+  polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2 });
+const MAT_GHOST  = new THREE.MeshStandardMaterial({ color:0x22B5A0, transparent:true, opacity:.4,
+  roughness:.6, depthWrite:false });
+
+// Merged geometry per part id — plates carry up to 53 sockets, so keep draw calls flat.
+const GEOM = {};
+for (const [id, def] of Object.entries(PARTS)) {
+  const bodies = [], sockets = [];
+  if (def.plate) {
+    const b = new THREE.BoxGeometry(def.size[0], def.size[1], PLATE_T);
+    b.translate(def.size[0]/2, def.size[1]/2, U - PLATE_T/2);   // flush to cell front
+    bodies.push(b);
+  } else if (def.chamfered) {
+    bodies.push(chamferedCubeGeometry(def.size[0]));
+  } else if (def.column) {
+    // roundedBox(w,h,d) maps to world X=w, Y=d, Z=h — extrusion axis becomes Y.
+    const [X,Y,Z] = def.dims;
+    const b = roundedBox(X, Z, Y);
+    b.translate(X/2, Y/2, Z/2);
+    bodies.push(b);
+  } else {
+    const s = def.size[0];
+    const b = roundedBox(s, s, s);
+    b.translate(s/2, s/2, s/2);
+    bodies.push(b);
+  }
+  for (const c of def.conns) {
+    const spec = c.k === 'm' ? (c.s === 2 ? M2 : M1)
+                             : (def.plate ? FW : (c.s === 2 ? F2 : F1));
+    if (c.k === 'm') bodies.push(...studGeoms(spec, c.p, c.f));
+    else             sockets.push(...socketGeoms(spec, c.p, c.f));
+  }
+  GEOM[id] = {
+    body: BGU.mergeGeometries(bodies, false),
+    socket: sockets.length ? BGU.mergeGeometries(sockets, false) : null,
+  };
+}
+
+function buildObject(id, ghost) {
+  const g = new THREE.Group(), G = GEOM[id];
+  const mat = ghost ? MAT_GHOST : (PARTS[id].plate ? MAT_PLATE : MAT_BODY);
+  const bm = new THREE.Mesh(G.body, mat); bm.castShadow = !ghost; bm.receiveShadow = !ghost;
+  g.add(bm);
+  if (G.socket && !ghost) g.add(new THREE.Mesh(G.socket, MAT_SOCKET));
+  return g;
+}
+
+const buildGroup = new THREE.Group(); scene.add(buildGroup);
+const ghostGroup = new THREE.Group(); scene.add(ghostGroup);
+const marker = new THREE.Mesh(new THREE.SphereGeometry(2.6, 12, 12),
+  new THREE.MeshBasicMaterial({ color:0x22B5A0 }));
+marker.visible = false; scene.add(marker);
+
+function rebuild() {
+  while (buildGroup.children.length) buildGroup.remove(buildGroup.children[0]);
+  state.forEach((p,i) => {
+    const o = buildObject(p.id, false);
+    o.position.copy(originMM(p.cell));
+    o.quaternion.copy(ORIENTATIONS[p.orient].q);
+    // geometry is authored in the part's local min-corner frame, and orientPart
+    // already renormalises there — so re-apply the same shift for rendering
+    const shift = renderShift(p.id, p.orient);
+    o.position.sub(shift.clone().applyQuaternion(ORIENTATIONS[p.orient].q));
+    o.userData.index = i;
+    buildGroup.add(o);
+  });
+  document.getElementById('empty').style.display = state.length ? 'none' : 'flex';
+}
+// The renormalising shift orientPart applied, in the part's own local frame.
+const shiftCache = new Map();
+function renderShift(id, o) {
+  const k = id+':'+o;
+  if (shiftCache.has(k)) return shiftCache.get(k);
+  const def = PARTS[id];
+  const centres = def.cells.map(([i,j,k2]) => rotVec(V(i*U+U/2, j*U+U/2, k2*U+U/2), o));
+  const min = centres.reduce((m,c)=>V(Math.min(m.x,c.x),Math.min(m.y,c.y),Math.min(m.z,c.z)),
+                             V(Infinity,Infinity,Infinity));
+  const shiftWorld = V(min.x-U/2, min.y-U/2, min.z-U/2);
+  const local = shiftWorld.clone().applyQuaternion(ORIENTATIONS[o].q.clone().invert());
+  shiftCache.set(k, local);
+  return local;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   INTERACTION
+   ═══════════════════════════════════════════════════════════════════════ */
+const ray = new THREE.Raycaster(), pointer = new THREE.Vector2();
+let hover = null, downAt = null;
+
+function updatePointer(ev) {
+  const r = renderer.domElement.getBoundingClientRect();
+  pointer.x = ((ev.clientX-r.left)/r.width)*2-1;
+  pointer.y = -((ev.clientY-r.top)/r.height)*2+1;
+}
+
+function pick() {
+  buildGroup.updateMatrixWorld(true);
+  ray.setFromCamera(pointer, camera);
+  const occ = occupancy(), conns = connIndex();
+
+  const hits = ray.intersectObjects(buildGroup.children, true);
+  if (hits.length) {
+    const hit = hits[0];
+    let obj = hit.object; while (obj.parent && obj.parent !== buildGroup) obj = obj.parent;
+    const part = state[obj.userData.index];
+    if (!part) return null;
+    // nearest EXPOSED connector on that part to the contact point
+    let best = null, bd = Infinity;
+    for (const c of worldConns(part)) {
+      const facing = DIRS[c.f].dot(hit.point.clone().sub(c.p)) > -2;
+      if (!facing) continue;
+      if (conns.has(connKey(c.p, OPPOSITE[c.f]))) continue;   // already mated
+      const d = c.p.distanceTo(hit.point);
+      if (d < bd) { bd = d; best = c; }
+    }
+    if (!best) return null;
+    return { target: best, cands: candidatesFor(selectedPart, best, occ, conns), removeIndex: obj.userData.index };
+  }
+
+  const gh = ray.intersectObject(ground);
+  if (gh.length) {
+    const p = gh[0].point;
+    const cell = [Math.round(p.x/U), Math.round(p.z/U), 0];
+    // Offer every distinct orientation so a plate can be laid as a FLOOR or
+    // stood as a WALL from the base plate; R cycles them.
+    const seen = new Set(), cands = [];
+    for (let o = 0; o < ORIENTATIONS.length; o++) {
+      const cand = { id:selectedPart, cell, orient:o };
+      if (!fits(cand, occ, conns)) continue;
+      const op = orientPart(selectedPart, o);
+      const sig = op.cells.map(ck).sort().join('|') + '#' +
+        op.conns.map(c => `${Math.round(c.p.x)},${Math.round(c.p.y)},${Math.round(c.p.z)},${c.f}${c.k}${c.s}`).sort().join(';');
+      if (seen.has(sig)) continue;
+      seen.add(sig); cands.push(cand);
+    }
+    return cands.length ? { target:null, cands } : null;
+  }
+  return null;
+}
+
+function refreshGhost() {
+  while (ghostGroup.children.length) ghostGroup.remove(ghostGroup.children[0]);
+  marker.visible = false;
+  if (!hover || !hover.cands.length) return;
+  const c = hover.cands[ghostIdx % hover.cands.length];
+  const g = buildObject(c.id, true);
+  g.position.copy(originMM(c.cell));
+  g.quaternion.copy(ORIENTATIONS[c.orient].q);
+  g.position.sub(renderShift(c.id, c.orient).clone().applyQuaternion(ORIENTATIONS[c.orient].q));
+  ghostGroup.add(g);
+  if (hover.target) { marker.position.copy(hover.target.p); marker.visible = true; }
+}
+
+renderer.domElement.addEventListener('pointermove', ev => {
+  updatePointer(ev);
+  const next = pick();
+  const changed = JSON.stringify(next?.cands?.[0]) !== JSON.stringify(hover?.cands?.[0]);
+  hover = next;
+  if (changed) ghostIdx = 0;
+  refreshGhost();
+});
+renderer.domElement.addEventListener('pointerdown', ev => { downAt = {x:ev.clientX, y:ev.clientY}; });
+renderer.domElement.addEventListener('pointerup', ev => {
+  if (!downAt) return;
+  const moved = Math.hypot(ev.clientX-downAt.x, ev.clientY-downAt.y);
+  downAt = null;
+  if (moved > 4 || ev.button !== 0) return;
+  updatePointer(ev);
+
+  if (ev.shiftKey) {
+    buildGroup.updateMatrixWorld(true);
+    ray.setFromCamera(pointer, camera);
+    const hits = ray.intersectObjects(buildGroup.children, true);
+    if (!hits.length) return;
+    let obj = hits[0].object; while (obj.parent && obj.parent !== buildGroup) obj = obj.parent;
+    commit(state.filter((_,i) => i !== obj.userData.index));
+    hover = null; refreshGhost(); return;
+  }
+
+  const p = pick();
+  if (!p || !p.cands.length) return;
+  commit([...state, p.cands[ghostIdx % p.cands.length]]);
+  hover = null; refreshGhost();
+});
+addEventListener('keydown', ev => {
+  const k = ev.key.toLowerCase();
+  if (k === 'r' && hover?.cands?.length > 1) { ghostIdx++; refreshGhost(); }
+  if (k === 'z' && (ev.metaKey || ev.ctrlKey)) { ev.preventDefault(); ev.shiftKey ? redo() : undo(); }
+});
+
+/* ═══════════════════════════════════════════════════════════════════════
+   UI
+   ═══════════════════════════════════════════════════════════════════════ */
+const el = id => document.getElementById(id);
+
+// Collapsed group names. Held outside the DOM because renderPalette() re-renders
+// on every part selection, which would otherwise reset the open/closed state.
+// Persisted so a session's layout survives a reload.
+const collapsed = new Set((() => {
+  try { return JSON.parse(localStorage.getItem('crux.collapsed') || '[]'); } catch { return []; }
+})());
+const saveCollapsed = () => {
+  try { localStorage.setItem('crux.collapsed', JSON.stringify([...collapsed])); } catch {}
+};
+
+function renderPalette() {
+  const groups = {};
+  for (const [id,d] of Object.entries(PARTS)) (groups[d.group] ||= []).push([id,d]);
+  el('part-list').innerHTML = Object.entries(groups).map(([g, items]) => {
+    const open = !collapsed.has(g);
+    return `<div class="grp">
+      <button class="ghead${open?' open':''}" data-grp="${g}"
+              aria-expanded="${open}" title="${open?'Collapse':'Expand'} ${g}">
+        <span class="chev">▶</span><span>${g}</span><span class="cnt">${items.length}</span>
+      </button>
+      <div class="gbody"${open?'':' hidden'}>
+      ${items.map(([id,d]) => `
+        <button class="part ${id===selectedPart?'sel':''}" data-id="${id}">
+          <div class="pn"><span>${id}</span><span class="sc">${d.scale}×</span></div>
+          <div class="pd">${d.name}</div>
+          <div class="pp">${d.desc}</div>
+          <div class="pp" style="color:var(--code)">$${d.price.toFixed(2)}</div>
+        </button>`).join('')}
+      </div></div>`;
+  }).join('');
+
+  el('part-list').querySelectorAll('.ghead').forEach(b => b.onclick = () => {
+    const g = b.dataset.grp;
+    collapsed.has(g) ? collapsed.delete(g) : collapsed.add(g);
+    saveCollapsed(); renderPalette();
+  });
+  el('part-list').querySelectorAll('.part').forEach(b => b.onclick = () => {
+    selectedPart = b.dataset.id; ghostIdx = 0; renderPalette(); refreshGhost();
+  });
+}
+
+function basketLines() {
+  const counts = {};
+  state.forEach(p => counts[p.id] = (counts[p.id]||0)+1);
+  return Object.entries(counts).map(([id,qty]) => ({ id, qty, ...PARTS[id],
+    sub: +(qty*PARTS[id].price).toFixed(2) }));
+}
+function islandCount() {
+  if (!state.length) return 0;
+  const conns = connIndex();
+  const adj = state.map(()=>new Set());
+  state.forEach((p,i) => worldConns(p).forEach(c => {
+    const o = conns.get(connKey(c.p, OPPOSITE[c.f]));
+    if (o && o.owner !== i && o.s === c.s && o.k !== c.k) { adj[i].add(o.owner); adj[o.owner].add(i); }
+  }));
+  const seen = new Set(); let n = 0;
+  for (let i=0;i<state.length;i++) {
+    if (seen.has(i)) continue;
+    n++; const st=[i];
+    while (st.length) { const c=st.pop(); if(seen.has(c))continue; seen.add(c); adj[c].forEach(x=>!seen.has(x)&&st.push(x)); }
+  }
+  return n;
+}
+
+function syncUI() {
+  const lines = basketLines();
+  const total = +lines.reduce((s,l)=>s+l.sub,0).toFixed(2);
+  el('bk-count').textContent = `${state.length} PART${state.length===1?'':'S'}`;
+  el('bk-lines').innerHTML = lines.length
+    ? lines.map(l => `<div class="line"><span class="lq">${l.qty}×</span>
+        <span style="flex:1">${l.name}<div class="lp">${l.id} · ${l.scale}×</div></span>
+        <span>$${l.sub.toFixed(2)}</span></div>`).join('')
+    : '<div class="empty-note">Nothing placed yet.</div>';
+  const islands = islandCount();
+  // CONSUMER-FACING: prices only — no production data. The "large build" note
+  // keys off part count, not print time, so nothing costing-related is exposed.
+  el('bk-totals').innerHTML = total ? `
+    <div class="trow"><span style="color:var(--muted)">Subtotal</span><span>$${total.toFixed(2)}</span></div>
+    <div class="trow"><span style="color:var(--muted)">Shipping</span><span>calculated at checkout</span></div>
+    <div class="trow big"><span>Total</span><span class="v">$${total.toFixed(2)}</span></div>
+    ${state.length >= 40 ? `<div class="warn">Large build — made to order, please allow extra production time.</div>` : ''}
+    ${islands>1?`<div class="warn">⚠ This build is in ${islands} separate pieces — they won't hold together as one object.</div>`:''}` : '';
+  el('btn-cart').disabled = !state.length;
+  el('btn-undo').disabled = !undoStack.length;
+  el('btn-redo').disabled = !redoStack.length;
+
+  if (state.length) {
+    const all = state.flatMap(worldCells);
+    const ax = all.map(c=>c[0]), ay = all.map(c=>c[1]), az = all.map(c=>c[2]);
+    const d = [Math.max(...ax)-Math.min(...ax)+1, Math.max(...ay)-Math.min(...ay)+1, Math.max(...az)-Math.min(...az)+1];
+    el('stats').innerHTML = `${d[0]}×${d[1]}×${d[2]} CELLS · ${d.map(v=>v*U).join('×')} MM`;
+  } else el('stats').innerHTML = '';
+  writeURL();
+}
+
+function writeURL() {
+  if (!state.length) { history.replaceState(null,'',location.pathname); return; }
+  const packed = state.map(p => [PART_IDS.indexOf(p.id), ...p.cell, p.orient].join('.')).join('_');
+  history.replaceState(null,'',`${location.pathname}?b=${btoa(packed).replace(/=+$/,'')}`);
+}
+function readURL() {
+  const b = new URLSearchParams(location.search).get('b');
+  if (!b) return;
+  try {
+    state = atob(b).split('_').map(s => {
+      const [pi,i,j,k,o] = s.split('.').map(Number);
+      return { id: PART_IDS[pi], cell:[i,j,k], orient:o };
+    }).filter(p => p.id);
+  } catch { state = []; }
+}
+
+el('btn-share').onclick = async () => {
+  writeURL();
+  try { await navigator.clipboard.writeText(location.href);
+    const s = el('saved'); s.style.opacity=1; setTimeout(()=>s.style.opacity=0,1800);
+  } catch { prompt('Copy your build link:', location.href); }
+};
+el('btn-clear').onclick = () => { if (state.length && confirm('Clear the whole build?')) commit([]); };
+el('btn-undo').onclick = undo;
+el('btn-redo').onclick = redo;
+
+// Shopify permalink cart: /cart/{variantId}:{qty},... — no API, no app, no auth.
+const SHOPIFY_VARIANTS = { /* 'CX-1N':'40000000000001', ... */ };
+el('btn-cart').onclick = () => {
+  const lines = basketLines();
+  const missing = lines.filter(l => !SHOPIFY_VARIANTS[l.id]);
+  if (missing.length) {
+    alert(`Store not wired up yet.\n\nYour build:\n${lines.map(l=>`  ${l.qty}× ${l.name} (${l.id})`).join('\n')}\n\nTotal: $${lines.reduce((s,l)=>s+l.sub,0).toFixed(2)} CAD\n\nAdd Shopify variant IDs to SHOPIFY_VARIANTS in build.html to enable checkout.`);
+    return;
+  }
+  location.href = `https://cruxcubes.com/cart/${lines.map(l=>`${SHOPIFY_VARIANTS[l.id]}:${l.qty}`).join(',')}`;
+};
+
+/* ═══════════════════════════════════════════════════════════════════════ */
+function resize() {
+  const r = view.getBoundingClientRect();
+  camera.aspect = r.width/r.height; camera.updateProjectionMatrix();
+  renderer.setSize(r.width, r.height);
+}
+addEventListener('resize', resize);
+
+renderPalette(); readURL(); rebuild(); syncUI(); resize();
+
+// Debug handle — CRUX.state, CRUX.PARTS, CRUX.ORIENTATIONS.length
+window.CRUX = { scene, camera, renderer, controls, buildGroup, ghostGroup, THREE,
+                get state(){return state}, ORIENTATIONS, PARTS, orientPart, worldCells, worldConns,
+                candidatesFor, occupancy, connIndex, fits, DIRS, OPPOSITE, faceUnder, faceBasis,
+                // Price-only summary. Production data (machine time, rate) is
+                // intentionally absent from this build.
+                quote() {
+                  const lines = basketLines();
+                  return {
+                    lines: lines.map(l => ({ id:l.id, qty:l.qty, price:l.sub })),
+                    total: +lines.reduce((s,l)=>s+l.sub,0).toFixed(2),
+                  };
+                } };
+
+(function loop(){ requestAnimationFrame(loop); controls.update(); renderer.render(scene,camera); })();
+</script>
+</body>
+</html>
