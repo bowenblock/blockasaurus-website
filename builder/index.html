@@ -531,18 +531,52 @@ let ghostIdx = 0;
 const ck = c => c.join(',');
 const originMM = ([i,j,k]) => V(i*U, k*U, j*U);   // grid j -> world Z, k -> world Y
 
-// A SEATED part (plugged onto a 45° diagonal socket) sits off the lattice at a
-// free pose, so it has no cells and exposes no further sockets — a leaf.
+// A SEATED part sits off the lattice at a free pose (seat:{p,q}), so it occupies
+// no cells. Its CONNECTORS are still live though — you can build off them — see
+// worldConnsV, the geometric connector layer used for free-posed building.
 function worldCells(p) {
   if (p.seat) return [];
   return orientPart(p.id, p.orient).cells.map(([a,b,c]) => [p.cell[0]+a, p.cell[1]+c, p.cell[2]+b]);
 }
+// Grid connectors (lattice parts only) — feeds the integer-grid placement path.
 function worldConns(p) {
   if (p.seat) return [];
   const o = originMM(p.cell);
   return orientPart(p.id, p.orient).conns.map(c => ({
     p: c.p.clone().add(o), f:c.f, k:c.k, s:c.s
   }));
+}
+
+// GEOMETRIC connectors for ANY part (lattice or free): world position + world
+// normal vector + kind + scale. This is what lets you attach to a free-posed
+// part whose connectors point at 45° — directions no lattice index can name.
+function worldConnsV(p) {
+  if (p.seat) {
+    const q = new THREE.Quaternion().fromArray(p.seat.q);
+    const pos = new THREE.Vector3().fromArray(p.seat.p);
+    return PARTS[p.id].conns.map(c => ({
+      pos: c.p.clone().applyQuaternion(q).add(pos),
+      nrm: DIRS[c.f].clone().applyQuaternion(q), k:c.k, s:c.s }));
+  }
+  const o = originMM(p.cell);
+  return orientPart(p.id, p.orient).conns.map(c => ({
+    pos: c.p.clone().add(o), nrm: DIRS[c.f], k:c.k, s:c.s, f:c.f }));
+}
+// Spatial index of every connector, keyed by 0.1mm-quantized position.
+const cq = v => `${Math.round(v.x*10)},${Math.round(v.y*10)},${Math.round(v.z*10)}`;
+function connGraph(list = state) {
+  const at = new Map();
+  list.forEach((p,i) => worldConnsV(p).forEach(c => {
+    const key = cq(c.pos);
+    (at.get(key) || at.set(key, []).get(key)).push({ ...c, owner:i });
+  }));
+  return at;
+}
+// Two connectors mate when they're at the same point, point into each other,
+// carry opposite kinds and the same scale.
+const mates = (a, b) => a.owner !== b.owner && a.k !== b.k && a.s === b.s && a.nrm.dot(b.nrm) < -0.99;
+function isMated(conn, graph) {
+  return (graph.get(cq(conn.pos)) || []).some(o => mates(conn, o));
 }
 function occupancy(list = state) {
   const m = new Map();
@@ -622,21 +656,20 @@ function joinCount(cand, conns) {
   return n;
 }
 
-// Seat a part onto a 45° diagonal FEMALE: the socket sits off the lattice grid,
-// so an ordinary stud can't reach it in a whole-cell pose. Instead we pose the
-// part freely — rotate it so one of its male studs points INTO the socket and
-// lands on the socket point, exactly as a cube pressed against the slope. Four
-// roll steps about the socket normal give R-cycle alternates.
-function seatingCandidates(id, target) {
-  const male = PARTS[id].conns.find(k => k.k === 'm');   // reference stud (top, for cubes)
-  if (!male) return [];                                   // plates etc. have no stud to seat
-  const N = DIRS[target.f];                                // socket outward normal
-  const into = N.clone().negate();                        // the stud must point this way
-  const base = new THREE.Quaternion().setFromUnitVectors(DIRS[male.f], into);
+// FREE-POSE attach: place a part so one of its connectors mates `target`
+// (a geometric connector {pos, nrm, k, s}) — its mating connector rotated to
+// point into the target and landing on the target point. Works off ANY exposed
+// connector, lattice or free, so you can keep building off a seated part. Four
+// roll steps about the target normal give R-cycle alternates.
+function freeAttach(id, target) {
+  const mate = PARTS[id].conns.find(k => k.k !== target.k && k.s === target.s);
+  if (!mate) return [];                                    // nothing on this part can mate it
+  const into = target.nrm.clone().negate();               // our connector must point this way
+  const base = new THREE.Quaternion().setFromUnitVectors(DIRS[mate.f], into);
   const out = [];
   for (let r = 0; r < 4; r++) {
-    const q = new THREE.Quaternion().setFromAxisAngle(N, r * Math.PI/2).multiply(base);
-    const p = target.p.clone().sub(male.p.clone().applyQuaternion(q));   // stud base lands on socket
+    const q = new THREE.Quaternion().setFromAxisAngle(target.nrm, r * Math.PI/2).multiply(base);
+    const p = target.pos.clone().sub(mate.p.clone().applyQuaternion(q));   // our connector lands on target
     out.push({ id, seat: { p:[+p.x.toFixed(3), +p.y.toFixed(3), +p.z.toFixed(3)],
                            q:[+q.x.toFixed(4), +q.y.toFixed(4), +q.z.toFixed(4), +q.w.toFixed(4)] } });
   }
@@ -802,30 +835,31 @@ function updatePointer(ev) {
 function pick() {
   buildGroup.updateMatrixWorld(true);
   ray.setFromCamera(pointer, camera);
-  const occ = occupancy(), conns = connIndex();
+  const occ = occupancy(), conns = connIndex(), graph = connGraph();
 
   const hits = ray.intersectObjects(buildGroup.children, true);
   if (hits.length) {
     const hit = hits[0];
     let obj = hit.object; while (obj.parent && obj.parent !== buildGroup) obj = obj.parent;
-    const part = state[obj.userData.index];
+    const idx = obj.userData.index;
+    const part = state[idx];
     if (!part) return null;
-    // nearest EXPOSED connector on that part to the contact point
+    // nearest EXPOSED connector on that part (geometric, so it works on free parts)
     let best = null, bd = Infinity;
-    for (const c of worldConns(part)) {
-      const facing = DIRS[c.f].dot(hit.point.clone().sub(c.p)) > -2;
-      if (!facing) continue;
-      if (conns.has(connKey(c.p, OPPOSITE[c.f]))) continue;   // already mated
-      const d = c.p.distanceTo(hit.point);
+    for (const c of worldConnsV(part)) {
+      if (c.nrm.dot(hit.point.clone().sub(c.pos)) < -2) continue;     // facing away
+      if (isMated({ ...c, owner:idx }, graph)) continue;              // already mated
+      const d = c.pos.distanceTo(hit.point);
       if (d < bd) { bd = d; best = c; }
     }
     if (!best) return null;
-    // A 45° diagonal socket is off-grid: seat the part against the slope rather
-    // than trying (and failing) to land a whole-cell stud on it.
-    const cands = (best.f >= 6 && best.k === 'f')
-      ? seatingCandidates(selectedPart, best)
-      : candidatesFor(selectedPart, best, occ, conns);
-    return { target: best, cands, removeIndex: obj.userData.index };
+    // Grid placement onto a lattice AXIS socket; free-pose attach for anything
+    // off-grid — a free-posed part, or a lattice 45° diagonal socket.
+    const gridTarget = !part.seat && best.f !== undefined && best.f < 6;
+    const cands = gridTarget
+      ? candidatesFor(selectedPart, { p:best.pos, f:best.f, k:best.k, s:best.s }, occ, conns)
+      : freeAttach(selectedPart, best);
+    return { target: best, cands, removeIndex: idx };
   }
 
   const gh = ray.intersectObject(ground);
@@ -869,7 +903,7 @@ function refreshGhost() {
   const g = buildObject(c.id, true);
   applyPose(g, c);
   ghostGroup.add(g);
-  if (hover.target) { marker.position.copy(hover.target.p); marker.visible = true; }
+  if (hover.target) { marker.position.copy(hover.target.pos); marker.visible = true; }
 }
 
 // Signature of the AVAILABLE ORIENTATIONS, independent of position. Reset the
@@ -967,15 +1001,17 @@ function basketLines() {
 }
 function islandCount() {
   if (!state.length) return 0;
-  const conns = connIndex();
+  // Geometric graph so free-posed parts count as connected to what they mate.
+  const graph = connGraph();
   const adj = state.map(()=>new Set());
-  state.forEach((p,i) => worldConns(p).forEach(c => {
-    const o = conns.get(connKey(c.p, OPPOSITE[c.f]));
-    if (o && o.owner !== i && o.s === c.s && o.k !== c.k) { adj[i].add(o.owner); adj[o.owner].add(i); }
+  state.forEach((p,i) => worldConnsV(p).forEach(c => {
+    (graph.get(cq(c.pos)) || []).forEach(o => {
+      if (mates({ ...c, owner:i }, o)) { adj[i].add(o.owner); adj[o.owner].add(i); }
+    });
   }));
   const seen = new Set(); let n = 0;
   for (let i=0;i<state.length;i++) {
-    if (seen.has(i) || state[i].seat) continue;   // seated parts are attached leaves
+    if (seen.has(i)) continue;
     n++; const st=[i];
     while (st.length) { const c=st.pop(); if(seen.has(c))continue; seen.add(c); adj[c].forEach(x=>!seen.has(x)&&st.push(x)); }
   }
@@ -1072,6 +1108,7 @@ renderPalette(); readURL(); rebuild(); syncUI(); resize();
 // Debug handle — CRUX.state, CRUX.PARTS, CRUX.ORIENTATIONS.length
 window.CRUX = { scene, camera, renderer, controls, buildGroup, ghostGroup, THREE,
                 get state(){return state}, ORIENTATIONS, PARTS, orientPart, worldCells, worldConns,
+                worldConnsV, connGraph, cq, mates, isMated, freeAttach,
                 candidatesFor, occupancy, connIndex, fits, DIRS, OPPOSITE, faceUnder, faceBasis,
                 // Price-only summary. Production data (machine time, rate) is
                 // intentionally absent from this build.
