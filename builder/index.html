@@ -798,6 +798,18 @@ function pick() {
       if (seen.has(sig)) continue;
       seen.add(sig); cands.push(cand);
     }
+    // A plate dropped on the ground should lie FLAT by default (sockets up),
+    // since that's the natural way to place it — standing it as a wall is the
+    // R-alternate. Order: flat-up, flat-down, then the wall orientations.
+    if (PARTS[selectedPart].plate) {
+      const rank = cand => {
+        const op = orientPart(cand.id, cand.orient);
+        const flat = Math.max(...op.cells.map(v => v[1])) === 0;
+        const dir = op.conns[0].f;
+        return flat ? (dir === 2 ? 0 : 1) : 2;      // 0 flat-up, 1 flat-down, 2 wall
+      };
+      cands.sort((a, b) => rank(a) - rank(b));
+    }
     return cands.length ? { target:null, cands } : null;
   }
   return null;
@@ -816,12 +828,16 @@ function refreshGhost() {
   if (hover.target) { marker.position.copy(hover.target.p); marker.visible = true; }
 }
 
+// Signature of the AVAILABLE ORIENTATIONS, independent of position. Reset the
+// R-cycle index only when this set changes — not when the cursor merely moves to
+// a new cell. Otherwise picking "lay flat" and then aiming resets you to the
+// default upright orientation, making a flat plate impossible to place.
+const orientSig = h => h?.cands?.map(c => c.id + ':' + c.orient).sort().join('|') || '';
 renderer.domElement.addEventListener('pointermove', ev => {
   updatePointer(ev);
   const next = pick();
-  const changed = JSON.stringify(next?.cands?.[0]) !== JSON.stringify(hover?.cands?.[0]);
+  if (orientSig(next) !== orientSig(hover)) ghostIdx = 0;
   hover = next;
-  if (changed) ghostIdx = 0;
   refreshGhost();
 });
 renderer.domElement.addEventListener('pointerdown', ev => { downAt = {x:ev.clientX, y:ev.clientY}; });
