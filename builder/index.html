@@ -412,9 +412,15 @@ const diagPitch = scale => U * scale * Math.SQRT2;
 // hypotenuse (that face prints flat on the base plate), a female on -X, and one
 // male on top. The chamfer eats the +X and -Y faces down to 5.858mm, so those
 // two can't carry anything.
-//   sideMale = true -> the 2-male / 1-hypotenuse-female variant (website only
-//   for now; the physical part gets modelled later).
-function diagonalPart(scale = 1, sideMale = false) {
+// A diagonal (hypotenuse) FEMALE can only ever be filled by a diagonal MALE:
+// the 45° face's normal is an edge diagonal, and no 90° cube rotation can point
+// an axis stud along it — so a cube/column stud never reaches a sloped socket.
+// The mate is another wedge presenting a male on its hypotenuse; joined on the
+// slope, two wedges make a full cube.
+//   hypMale=false -> natural (the printed part): hyp female, top male, side female.
+//   hypMale=true  -> the male counterpart: hyp MALE, top male, side female — this
+//                    is what actually fills a diagonal female.
+function diagonalPart(scale = 1, hypMale = false) {
   const S = 20 * scale, c = S/2;
   const n = DIRS[12];                            // (1,-1,0)/√2 — the chamfer normal
   const face = V(c,c,c).addScaledVector(n, chamferOffset(S));
@@ -423,9 +429,9 @@ function diagonalPart(scale = 1, sideMale = false) {
   return {
     cells,
     conns: [
-      conn(face, 12, 'f', scale),                     // hypotenuse female (prints on the plate)
+      conn(face, 12, hypMale ? 'm' : 'f', scale),     // hypotenuse (prints on the plate)
       conn(V(c,S,c), 2, 'm', scale),                  // male stud on top
-      conn(V(0,c,c), 1, sideMale ? 'm' : 'f', scale), // -X
+      conn(V(0,c,c), 1, 'f', scale),                  // -X female
     ],
     size:[S,S,S], scale, chamfered:true, price: scale===2?PRICE.cube2:PRICE.cube1,
   };
@@ -463,11 +469,11 @@ const PARTS = {
               ...columnPart(8) },
   'DG-1':   { group:'Diagonals — 1× (20mm)', name:'Diagonal Connector', desc:'45° face socket + side socket, male top',
               ...diagonalPart(1, false) },
-  'DG-1D':  { group:'Diagonals — 1× (20mm)', name:'Diagonal — Dual Male', desc:'Hypotenuse socket, male top + male side',
+  'DG-1D':  { group:'Diagonals — 1× (20mm)', name:'Diagonal — Male Face', desc:'Male 45° face + male top — fills a diagonal socket',
               ...diagonalPart(1, true) },
   'DG-2':   { group:'Diagonals — 2× (40mm)', name:'Large Diagonal', desc:'40mm unit — hypotenuse + side socket, male top',
               ...diagonalPart(2, false) },
-  'DG-2D':  { group:'Diagonals — 2× (40mm)', name:'Large Diagonal — Dual Male', desc:'40mm unit — hypotenuse socket, male top + male side',
+  'DG-2D':  { group:'Diagonals — 2× (40mm)', name:'Large Diagonal — Male Face', desc:'40mm unit — male 45° face + male top',
               ...diagonalPart(2, true) },
   'CX-2N':  { group:'Cubes — 2× (40mm)', name:'Large Cube — Natural', desc:'40mm unit, male top',
               ...cubePart(2) },
@@ -525,10 +531,14 @@ let ghostIdx = 0;
 const ck = c => c.join(',');
 const originMM = ([i,j,k]) => V(i*U, k*U, j*U);   // grid j -> world Z, k -> world Y
 
+// A SEATED part (plugged onto a 45° diagonal socket) sits off the lattice at a
+// free pose, so it has no cells and exposes no further sockets — a leaf.
 function worldCells(p) {
+  if (p.seat) return [];
   return orientPart(p.id, p.orient).cells.map(([a,b,c]) => [p.cell[0]+a, p.cell[1]+c, p.cell[2]+b]);
 }
 function worldConns(p) {
+  if (p.seat) return [];
   const o = originMM(p.cell);
   return orientPart(p.id, p.orient).conns.map(c => ({
     p: c.p.clone().add(o), f:c.f, k:c.k, s:c.s
@@ -610,6 +620,27 @@ function joinCount(cand, conns) {
     if (other && other.s === c.s && other.k !== c.k) n++;
   }
   return n;
+}
+
+// Seat a part onto a 45° diagonal FEMALE: the socket sits off the lattice grid,
+// so an ordinary stud can't reach it in a whole-cell pose. Instead we pose the
+// part freely — rotate it so one of its male studs points INTO the socket and
+// lands on the socket point, exactly as a cube pressed against the slope. Four
+// roll steps about the socket normal give R-cycle alternates.
+function seatingCandidates(id, target) {
+  const male = PARTS[id].conns.find(k => k.k === 'm');   // reference stud (top, for cubes)
+  if (!male) return [];                                   // plates etc. have no stud to seat
+  const N = DIRS[target.f];                                // socket outward normal
+  const into = N.clone().negate();                        // the stud must point this way
+  const base = new THREE.Quaternion().setFromUnitVectors(DIRS[male.f], into);
+  const out = [];
+  for (let r = 0; r < 4; r++) {
+    const q = new THREE.Quaternion().setFromAxisAngle(N, r * Math.PI/2).multiply(base);
+    const p = target.p.clone().sub(male.p.clone().applyQuaternion(q));   // stud base lands on socket
+    out.push({ id, seat: { p:[+p.x.toFixed(3), +p.y.toFixed(3), +p.z.toFixed(3)],
+                           q:[+q.x.toFixed(4), +q.y.toFixed(4), +q.z.toFixed(4), +q.w.toFixed(4)] } });
+  }
+  return out;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -716,16 +747,26 @@ const marker = new THREE.Mesh(new THREE.SphereGeometry(2.6, 12, 12),
   new THREE.MeshBasicMaterial({ color:0x22B5A0 }));
 marker.visible = false; scene.add(marker);
 
+// Position a group for a placement — either a lattice {cell,orient} or a free
+// {seat:{p,q}} pose (diagonal-seated parts).
+function applyPose(obj, place) {
+  if (place.seat) {
+    obj.position.fromArray(place.seat.p);
+    obj.quaternion.fromArray(place.seat.q);
+    return;
+  }
+  obj.position.copy(originMM(place.cell));
+  obj.quaternion.copy(ORIENTATIONS[place.orient].q);
+  // geometry is authored in the part's local min-corner frame, and orientPart
+  // already renormalises there — so re-apply the same shift for rendering
+  obj.position.sub(renderShift(place.id, place.orient).clone().applyQuaternion(ORIENTATIONS[place.orient].q));
+}
+
 function rebuild() {
   while (buildGroup.children.length) buildGroup.remove(buildGroup.children[0]);
   state.forEach((p,i) => {
     const o = buildObject(p.id, false);
-    o.position.copy(originMM(p.cell));
-    o.quaternion.copy(ORIENTATIONS[p.orient].q);
-    // geometry is authored in the part's local min-corner frame, and orientPart
-    // already renormalises there — so re-apply the same shift for rendering
-    const shift = renderShift(p.id, p.orient);
-    o.position.sub(shift.clone().applyQuaternion(ORIENTATIONS[p.orient].q));
+    applyPose(o, p);
     o.userData.index = i;
     buildGroup.add(o);
   });
@@ -779,7 +820,12 @@ function pick() {
       if (d < bd) { bd = d; best = c; }
     }
     if (!best) return null;
-    return { target: best, cands: candidatesFor(selectedPart, best, occ, conns), removeIndex: obj.userData.index };
+    // A 45° diagonal socket is off-grid: seat the part against the slope rather
+    // than trying (and failing) to land a whole-cell stud on it.
+    const cands = (best.f >= 6 && best.k === 'f')
+      ? seatingCandidates(selectedPart, best)
+      : candidatesFor(selectedPart, best, occ, conns);
+    return { target: best, cands, removeIndex: obj.userData.index };
   }
 
   const gh = ray.intersectObject(ground);
@@ -821,9 +867,7 @@ function refreshGhost() {
   if (!hover || !hover.cands.length) return;
   const c = hover.cands[ghostIdx % hover.cands.length];
   const g = buildObject(c.id, true);
-  g.position.copy(originMM(c.cell));
-  g.quaternion.copy(ORIENTATIONS[c.orient].q);
-  g.position.sub(renderShift(c.id, c.orient).clone().applyQuaternion(ORIENTATIONS[c.orient].q));
+  applyPose(g, c);
   ghostGroup.add(g);
   if (hover.target) { marker.position.copy(hover.target.p); marker.visible = true; }
 }
@@ -931,7 +975,7 @@ function islandCount() {
   }));
   const seen = new Set(); let n = 0;
   for (let i=0;i<state.length;i++) {
-    if (seen.has(i)) continue;
+    if (seen.has(i) || state[i].seat) continue;   // seated parts are attached leaves
     n++; const st=[i];
     while (st.length) { const c=st.pop(); if(seen.has(c))continue; seen.add(c); adj[c].forEach(x=>!seen.has(x)&&st.push(x)); }
   }
@@ -960,8 +1004,8 @@ function syncUI() {
   el('btn-undo').disabled = !undoStack.length;
   el('btn-redo').disabled = !redoStack.length;
 
-  if (state.length) {
-    const all = state.flatMap(worldCells);
+  const all = state.flatMap(worldCells);   // seated parts contribute no cells
+  if (all.length) {
     const ax = all.map(c=>c[0]), ay = all.map(c=>c[1]), az = all.map(c=>c[2]);
     const d = [Math.max(...ax)-Math.min(...ax)+1, Math.max(...ay)-Math.min(...ay)+1, Math.max(...az)-Math.min(...az)+1];
     el('stats').innerHTML = `${d[0]}×${d[1]}×${d[2]} CELLS · ${d.map(v=>v*U).join('×')} MM`;
@@ -971,7 +1015,11 @@ function syncUI() {
 
 function writeURL() {
   if (!state.length) { history.replaceState(null,'',location.pathname); return; }
-  const packed = state.map(p => [PART_IDS.indexOf(p.id), ...p.cell, p.orient].join('.')).join('_');
+  // lattice: <pi>.<i>.<j>.<k>.<o>   seated: s,<pi>,<px>,<py>,<pz>,<qx>,<qy>,<qz>,<qw>
+  // (seated uses ',' between fields because the floats contain '.' themselves)
+  const packed = state.map(p => p.seat
+    ? ['s', PART_IDS.indexOf(p.id), ...p.seat.p, ...p.seat.q].join(',')
+    : [PART_IDS.indexOf(p.id), ...p.cell, p.orient].join('.')).join('_');
   history.replaceState(null,'',`${location.pathname}?b=${btoa(packed).replace(/=+$/,'')}`);
 }
 function readURL() {
@@ -979,6 +1027,10 @@ function readURL() {
   if (!b) return;
   try {
     state = atob(b).split('_').map(s => {
+      if (s[0] === 's') {
+        const n = s.split(',').slice(1).map(Number);
+        return { id: PART_IDS[n[0]], seat:{ p:n.slice(1,4), q:n.slice(4,8) } };
+      }
       const [pi,i,j,k,o] = s.split('.').map(Number);
       return { id: PART_IDS[pi], cell:[i,j,k], orient:o };
     }).filter(p => p.id);
