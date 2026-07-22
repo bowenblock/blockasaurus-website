@@ -367,7 +367,8 @@ const conn = (p, f, k, s, offgrid = false) => ({ p, f, k, s, offgrid });
 const PRINT = {
   cube1: 8.25, cube2: 30,          // small / large cube (any variety, incl. diagonals)
   columnPerUnit: 10,               // per unit of height
-  plate4x4: 120, plate8x4: 240,    // wall mounts (double-sided same slab, same time)
+  platePerCell: 1.875,             // per 20mm cell — area-based, so any plate size/scale works
+                                   // (2× 4×4 = 64 cells = 120 min; 8×4 = 128 = 240 min)
   facadePerCell: 2.5,              // 6×4 = 24 cells = 60 min = 1 h
 };
 const RATE_PER_HOUR = 16;          // CAD per printing-hour — the profitability lever
@@ -482,25 +483,28 @@ function diagonalPart(scale = 1, hypMale = false) {
 
 // 2x wall-mount plate. `quincunx` adds the interstitial socket set offset
 // half a 2x unit (20mm) in both axes — the 16s->25s / 32s->53s jump.
-function platePart(uw, uh, quincunx, doubleSided = false) {
-  const W = uw*40, H = uh*40;
+// `scale` = 2 (40mm units) or 1 (20mm units). uw/uh are in that unit; each unit
+// spans `scale` lattice cells.
+function platePart(uw, uh, quincunx, doubleSided = false, scale = 2) {
+  const unit = 20 * scale, W = uw*unit, H = uh*unit;
   // Cell triples are read as (x,y,z) — same frame as `conns` and the geometry.
   // The plate spans X (width) and Y (height) and is one cell deep in Z, with
   // sockets facing +Z. Laying these out in X-Z instead silently desynced
   // occupancy from the mesh.
   const cells = [];
-  for (let i=0;i<uw*2;i++) for (let j=0;j<uh*2;j++) cells.push([i,j,0]);
+  for (let i=0;i<uw*scale;i++) for (let j=0;j<uh*scale;j++) cells.push([i,j,0]);
   const pts = [];
-  for (let a=0;a<uw;a++) for (let b=0;b<uh;b++) pts.push([a*40+20, b*40+20]);
-  if (quincunx) for (let a=1;a<uw;a++) for (let b=1;b<uh;b++) pts.push([a*40, b*40]);
+  for (let a=0;a<uw;a++) for (let b=0;b<uh;b++) pts.push([a*unit+unit/2, b*unit+unit/2]);
+  if (quincunx) for (let a=1;a<uw;a++) for (let b=1;b<uh;b++) pts.push([a*unit, b*unit]);
   // Front sockets at the +Z cell boundary (grid-snap). The slab occupies
   // z = U-PLATE_T .. U (flush with the front). A DOUBLE-SIDED plate adds the
   // same grid on the BACK face (z = U-PLATE_T, facing -Z); the back face is
   // off the cell grid, so parts mate it by free-pose.
-  const conns = pts.map(([x,y]) => conn(V(x,y,U), 4, 'f', 2));
-  if (doubleSided) pts.forEach(([x,y]) => conns.push(conn(V(x,y,U-PLATE_T), 5, 'f', 2, true)));
-  return { cells, conns, size:[W,H,PLATE_T], scale:2, plate:true, socketCount:pts.length, doubleSided,
-           minutes: (uw===8?PRINT.plate8x4:PRINT.plate4x4), price: priceFromMin(uw===8?PRINT.plate8x4:PRINT.plate4x4) };
+  const conns = pts.map(([x,y]) => conn(V(x,y,U), 4, 'f', scale));
+  if (doubleSided) pts.forEach(([x,y]) => conns.push(conn(V(x,y,U-PLATE_T), 5, 'f', scale, true)));
+  const minutes = (uw*scale) * (uh*scale) * PRINT.platePerCell;   // area-based (20mm cells)
+  return { cells, conns, size:[W,H,PLATE_T], scale, plate:true, socketCount:pts.length, doubleSided,
+           minutes, price: priceFromMin(minutes) };
 }
 
 // Plain facade — a thin decorative panel, 1× (20mm) units, that MOUNTS onto a
@@ -558,6 +562,9 @@ const PARTS = {
               ...platePart(8,4,false,true) },
   'WM-8x4Q-DS': { group:'Wall Mounts — Double-Sided', name:'Wall Mount 8×4 Quincunx — Double-Sided', desc:'320×160mm · 53 sockets both faces',
               ...platePart(8,4,true,true) },
+  'WM-16x8Q-DS': { group:'Wall Mounts — 1× (20mm)', name:'Wall Mount 16×8 Quincunx — Double-Sided',
+              desc:'320×160mm · 1× socket grid, quincunx, both faces',
+              ...platePart(16,8,true,true,1) },
   'FAC-1x1': { group:'Facades — 1× (20mm)', name:'Facade 1×1', desc:'20×20mm · plain panel',
               ...facadePart(1,1) },
   'FAC-4x2': { group:'Facades — 1× (20mm)', name:'Facade 4×2', desc:'80×40mm · plain panel',
