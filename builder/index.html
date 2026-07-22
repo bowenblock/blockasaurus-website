@@ -364,10 +364,12 @@ const conn = (p, f, k, s, offgrid = false) => ({ p, f, k, s, offgrid });
    show. Columns are per-unit-of-height. Update these when pricing changes. */
 const PRICE = {
   cube1: 2.75, cube2: 10.00,          // small / large cube (any variety, incl. diagonals)
-  columnPerUnit: 3.3333,              // × height in units
+  columnPerUnit: 3.3333,              // × height in units (before the column modifier)
   plate4x4: 40.00, plate8x4: 80.00,   // wall mounts
-  facadePerUnit: 1.50,                // × unit cells — PLACEHOLDER, no facade print time yet
+  facadePerUnit: 0.8333,              // × unit cells — 6×4 (24 cells) = 1h print = $20
 };
+// Cost modifiers by part family (1 = no change). Columns run 20% cheaper.
+const COST_MODIFIER = { column: 0.8 };
 
 function cubePart(scale, sideMale = []) {
   const S = scale === 2 ? 40 : 20, c = S/2;
@@ -421,7 +423,7 @@ function columnPart(h, scale = 1) {
     conns.push(conn(V(c, y, 0), 5, 'f', scale));   // -Z
   }
   return { cells, conns, size:[S,H,S], dims:[S,H,S], scale, column:true,
-           price: +(h * PRICE.columnPerUnit).toFixed(2) };
+           price: +(h * PRICE.columnPerUnit * COST_MODIFIER.column).toFixed(2) };
 }
 
 // Diagonal connector, from `diagonal connector 4.5_fixed.stl`.
