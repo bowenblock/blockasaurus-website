@@ -362,24 +362,20 @@ const conn = (p, f, k, s, offgrid = false) => ({ p, f, k, s, offgrid });
    Final per-part retail prices only. How they are costed (machine time, rate)
    is intentionally NOT in the shipped code — the app just needs the number to
    show. Columns are per-unit-of-height. Update these when pricing changes. */
-const PRICE = {
-  cube1: 2.75, cube2: 10.00,          // small / large cube (any variety, incl. diagonals)
-  columnPerUnit: 3.3333,              // × height in units (before the column modifier)
-  plate4x4: 40.00, plate8x4: 80.00,   // wall mounts
-  facadePerUnit: 0.8333,              // × unit cells — 6×4 (24 cells) = 1h print = $20
-};
-// Cost modifiers by part family (1 = no change). Columns run 20% cheaper.
-const COST_MODIFIER = { column: 0.8 };
-
-// Print-time model (minutes) — used only for the basket's time total, NOT for
-// price (prices above are literals). The column cost modifier does NOT change
-// print time; it's a margin trade, so a column still prints at its real rate.
+// Print-time model (minutes). Price is DERIVED from this × the print-hour rate,
+// so time and price can never drift apart.
 const PRINT = {
   cube1: 8.25, cube2: 30,          // small / large cube (any variety, incl. diagonals)
   columnPerUnit: 10,               // per unit of height
   plate4x4: 120, plate8x4: 240,    // wall mounts (double-sided same slab, same time)
   facadePerCell: 2.5,              // 6×4 = 24 cells = 60 min = 1 h
 };
+const RATE_PER_HOUR = 16;          // CAD per printing-hour — the profitability lever
+const priceFromMin = m => +(m/60 * RATE_PER_HOUR).toFixed(2);
+// Cost modifiers by part family (1 = no change). Columns run 20% cheaper —
+// applied to PRICE only; print time stays real (a margin trade).
+const COST_MODIFIER = { column: 0.8 };
+
 const fmtTime = m => {
   const h = Math.floor(m/60), mm = Math.round(m%60);
   return h && mm ? `${h}h ${mm}m` : h ? `${h}h` : `${mm}m`;
@@ -396,7 +392,7 @@ function cubePart(scale, sideMale = []) {
     const male = f === 2 || sideMale.includes(f);
     return conn(p, f, male ? 'm' : 'f', scale);
   });
-  return { cells, conns, size:[S,S,S], scale, price: scale===2?PRICE.cube2:PRICE.cube1, minutes: scale===2?PRINT.cube2:PRINT.cube1 };
+  return { cells, conns, size:[S,S,S], scale, minutes: scale===2?PRINT.cube2:PRINT.cube1, price: priceFromMin(scale===2?PRINT.cube2:PRINT.cube1) };
 }
 
 // 2x body in natural config, with ONE side face swapped for four 1x sockets —
@@ -414,7 +410,7 @@ function conversionPart() {
   ];
   // +Z face carries a 2x2 grid of 1x females at 20mm pitch
   for (const x of [10,30]) for (const y of [10,30]) conns.push(conn(V(x,y,S), 4, 'f', 1));
-  return { cells, conns, size:[S,S,S], scale:2, conversion:true, price: PRICE.cube2, minutes: PRINT.cube2 };
+  return { cells, conns, size:[S,S,S], scale:2, conversion:true, minutes: PRINT.cube2, price: priceFromMin(PRINT.cube2) };
 }
 
 // Column — 1×1×H in natural configuration.
@@ -437,7 +433,8 @@ function columnPart(h, scale = 1) {
     conns.push(conn(V(c, y, 0), 5, 'f', scale));   // -Z
   }
   return { cells, conns, size:[S,H,S], dims:[S,H,S], scale, column:true,
-           price: +(h * PRICE.columnPerUnit * COST_MODIFIER.column).toFixed(2), minutes: h * PRINT.columnPerUnit };
+           minutes: h * PRINT.columnPerUnit,
+           price: +(h * PRINT.columnPerUnit / 60 * RATE_PER_HOUR * COST_MODIFIER.column).toFixed(2) };
 }
 
 // Diagonal connector, from `diagonal connector 4.5_fixed.stl`.
@@ -479,7 +476,7 @@ function diagonalPart(scale = 1, hypMale = false) {
       conn(V(c,S,c), 2, 'm', scale),                  // male stud on top
       conn(V(0,c,c), 1, 'f', scale),                  // -X female
     ],
-    size:[S,S,S], scale, chamfered:true, price: scale===2?PRICE.cube2:PRICE.cube1, minutes: scale===2?PRINT.cube2:PRINT.cube1,
+    size:[S,S,S], scale, chamfered:true, minutes: scale===2?PRINT.cube2:PRINT.cube1, price: priceFromMin(scale===2?PRINT.cube2:PRINT.cube1),
   };
 }
 
@@ -503,7 +500,7 @@ function platePart(uw, uh, quincunx, doubleSided = false) {
   const conns = pts.map(([x,y]) => conn(V(x,y,U), 4, 'f', 2));
   if (doubleSided) pts.forEach(([x,y]) => conns.push(conn(V(x,y,U-PLATE_T), 5, 'f', 2, true)));
   return { cells, conns, size:[W,H,PLATE_T], scale:2, plate:true, socketCount:pts.length, doubleSided,
-           price: (uw===8?PRICE.plate8x4:PRICE.plate4x4), minutes: (uw===8?PRINT.plate8x4:PRINT.plate4x4) };
+           minutes: (uw===8?PRINT.plate8x4:PRINT.plate4x4), price: priceFromMin(uw===8?PRINT.plate8x4:PRINT.plate4x4) };
 }
 
 // Plain facade — a thin decorative panel, 1× (20mm) units, that MOUNTS onto a
@@ -517,7 +514,7 @@ function facadePart(uw, uh) {
   for (let i=0;i<uw;i++) for (let j=0;j<uh;j++)
     conns.push(conn(V(i*U+U/2, j*U+U/2, 0), 5, 'm', 1));   // back-face stud, one per unit
   return { cells, conns, size:[W,H,FACADE_T], scale:1, facade:true, socketCount:uw*uh,
-           price: +(uw*uh * PRICE.facadePerUnit).toFixed(2), minutes: uw*uh * PRINT.facadePerCell };
+           minutes: uw*uh * PRINT.facadePerCell, price: priceFromMin(uw*uh * PRINT.facadePerCell) };
 }
 
 const PARTS = {
