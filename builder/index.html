@@ -71,6 +71,17 @@
 
   .tool{display:flex; gap:7px; margin-bottom:4px}
   .tool .btn{flex:1; padding:8px 4px; font-size:.68rem}
+  .btn.on{background:var(--teal); color:var(--bg)}
+
+  /* COLOUR TOOL */
+  .swatch-active{margin-left:auto; width:16px; height:16px; border:1px solid var(--line-strong);
+    border-radius:3px; background:#22B5A0}
+  #swatches{display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-top:2px}
+  .sw{width:100%; aspect-ratio:1; border:1px solid var(--line-strong); border-radius:3px;
+    cursor:pointer; padding:0; transition:transform .1s, border-color .1s}
+  .sw:hover{transform:scale(1.12); border-color:var(--teal)}
+  .sw.sel{border-color:var(--teal); box-shadow:0 0 0 1px var(--teal)}
+  .sw.def{background:linear-gradient(135deg,#22B5A0 50%,#2E3A40 50%)}
 
   #view{position:relative; background:var(--bg)}
   #view canvas{display:block}
@@ -131,6 +142,22 @@
         <button class="btn ghost" id="btn-undo" title="Undo (Cmd/Ctrl+Z)">Undo</button>
         <button class="btn ghost" id="btn-redo" title="Redo (Cmd/Ctrl+Shift+Z)">Redo</button>
       </div>
+
+      <div class="grp" id="colour-grp">
+        <button class="ghead open" id="colour-head" aria-expanded="true">
+          <span class="chev">▶</span><span>Colour</span>
+          <span class="swatch-active" id="active-sw"></span>
+        </button>
+        <div class="gbody" id="colour-body">
+          <div class="tool">
+            <button class="btn ghost" id="btn-paint" title="Paint mode: click a part to recolour it">Paint: Off</button>
+            <button class="btn ghost" id="btn-paint-all" title="Recolour every part">All</button>
+          </div>
+          <div id="swatches"></div>
+          <div class="code" id="active-name" style="color:var(--muted); margin-top:6px">DEFAULT</div>
+        </div>
+      </div>
+
       <div id="part-list"></div>
       <div class="code" style="color:var(--muted); margin-top:16px; line-height:1.7">
         // CLICK A SOCKET TO ATTACH<br>
@@ -566,6 +593,8 @@ function orientPart(id, o) {
 let state = [];                       // [{ id, cell:[i,j,k] (min corner), orient }]
 let undoStack = [], redoStack = [];   // never name these `history` — shadows window.history
 let ghostIdx = 0;
+let activeColor = null;   // null = each part's default look; else a Bambu hex
+let paintMode = false;
 
 const ck = c => c.join(',');
 const originMM = ([i,j,k]) => V(i*U, k*U, j*U);   // grid j -> world Z, k -> world Y
@@ -763,12 +792,32 @@ grid.material.transparent = true; grid.material.opacity = .5;
 grid.position.y = 0.05;
 scene.add(grid);
 
-const MAT_BODY   = new THREE.MeshStandardMaterial({ color:0x22B5A0, roughness:.62, metalness:.04 });
-const MAT_PLATE  = new THREE.MeshStandardMaterial({ color:0x2E3A40, roughness:.78, metalness:.05 });
 const MAT_SOCKET = new THREE.MeshStandardMaterial({ color:0x0C2B27, roughness:.95, metalness:0,
   polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2 });
 const MAT_GHOST  = new THREE.MeshStandardMaterial({ color:0x22B5A0, transparent:true, opacity:.4,
   roughness:.6, depthWrite:false });
+
+// Bambu Lab PLA Matte palette (official hex codes). High roughness reads matte.
+const BAMBU_COLORS = [
+  ['Ivory White','#FFFFFF'], ['Bone White','#CBC6B8'], ['Ash Grey','#9B9EA0'],
+  ['Nardo Grey','#757575'],  ['Charcoal','#1A1A1A'],
+  ['Desert Tan','#E8DBB7'],  ['Latte Brown','#D3B7A7'], ['Caramel','#AE835B'],
+  ['Terracotta','#B15533'],  ['Dark Brown','#7D6556'],  ['Dark Chocolate','#4D3324'],
+  ['Sakura Pink','#E8AFCF'], ['Plum','#950051'],        ['Scarlet Red','#DE4343'],
+  ['Dark Red','#BB3D43'],    ['Mandarin Orange','#F99963'], ['Lemon Yellow','#F7D959'],
+  ['Apple Green','#C2E189'], ['Grass Green','#61C680'], ['Dark Green','#68724D'],
+  ['Ice Blue','#A3D8E1'],    ['Sky Blue','#56B7E6'],    ['Marine Blue','#0078BF'],
+  ['Dark Blue','#042F56'],   ['Lilac Purple','#AE96D4'],
+];
+// The look each part has BEFORE any paint — preserves the original appearance.
+const DEFAULT_HEX = id => PARTS[id].plate ? '#2E3A40' : '#22B5A0';
+// One matte material per colour, cached.
+const bodyMats = new Map();
+function bodyMat(hex) {
+  if (!bodyMats.has(hex))
+    bodyMats.set(hex, new THREE.MeshStandardMaterial({ color:hex, roughness:.82, metalness:.02 }));
+  return bodyMats.get(hex);
+}
 
 // Merged geometry per part id — plates carry up to 53 sockets, so keep draw calls flat.
 const GEOM = {};
@@ -810,9 +859,9 @@ for (const [id, def] of Object.entries(PARTS)) {
   };
 }
 
-function buildObject(id, ghost) {
+function buildObject(id, ghost, hex) {
   const g = new THREE.Group(), G = GEOM[id];
-  const mat = ghost ? MAT_GHOST : (PARTS[id].plate ? MAT_PLATE : MAT_BODY);
+  const mat = ghost ? MAT_GHOST : bodyMat(hex || DEFAULT_HEX(id));
   const bm = new THREE.Mesh(G.body, mat); bm.castShadow = !ghost; bm.receiveShadow = !ghost;
   g.add(bm);
   if (G.socket && !ghost) g.add(new THREE.Mesh(G.socket, MAT_SOCKET));
@@ -843,7 +892,7 @@ function applyPose(obj, place) {
 function rebuild() {
   while (buildGroup.children.length) buildGroup.remove(buildGroup.children[0]);
   state.forEach((p,i) => {
-    const o = buildObject(p.id, false);
+    const o = buildObject(p.id, false, p.color);
     applyPose(o, p);
     o.userData.index = i;
     buildGroup.add(o);
@@ -958,6 +1007,7 @@ function refreshGhost() {
 const orientSig = h => h?.cands?.map(c => c.id + ':' + c.orient).sort().join('|') || '';
 renderer.domElement.addEventListener('pointermove', ev => {
   updatePointer(ev);
+  if (paintMode) { if (hover) { hover = null; refreshGhost(); } return; }   // no build ghost while painting
   const next = pick();
   if (orientSig(next) !== orientSig(hover)) ghostIdx = 0;
   hover = next;
@@ -971,6 +1021,18 @@ renderer.domElement.addEventListener('pointerup', ev => {
   if (moved > 4 || ev.button !== 0) return;
   updatePointer(ev);
 
+  // PAINT mode: click a part to recolour it to the active colour (null = default).
+  if (paintMode) {
+    buildGroup.updateMatrixWorld(true);
+    ray.setFromCamera(pointer, camera);
+    const hits = ray.intersectObjects(buildGroup.children, true);
+    if (!hits.length) return;
+    let obj = hits[0].object; while (obj.parent && obj.parent !== buildGroup) obj = obj.parent;
+    const i = obj.userData.index;
+    commit(state.map((p,j) => j === i ? { ...p, color: activeColor } : p));
+    return;
+  }
+
   if (ev.shiftKey) {
     buildGroup.updateMatrixWorld(true);
     ray.setFromCamera(pointer, camera);
@@ -983,7 +1045,8 @@ renderer.domElement.addEventListener('pointerup', ev => {
 
   const p = pick();
   if (!p || !p.cands.length) return;
-  commit([...state, p.cands[ghostIdx % p.cands.length]]);
+  // New parts adopt the active colour (null → the part's default look).
+  commit([...state, { ...p.cands[ghostIdx % p.cands.length], color: activeColor }]);
   hover = null; refreshGhost();
 });
 addEventListener('keydown', ev => {
@@ -1037,6 +1100,40 @@ function renderPalette() {
     selectedPart = b.dataset.id; ghostIdx = 0; renderPalette(); refreshGhost();
   });
 }
+
+/* ── COLOUR TOOL ─────────────────────────────────────────────────────────── */
+function setActiveColour(hex, name) {
+  activeColor = hex;                                   // null = default look
+  el('active-sw').style.background = hex || '#22B5A0';
+  el('active-name').textContent = (name || 'DEFAULT').toUpperCase();
+  el('swatches').querySelectorAll('.sw').forEach(s =>
+    s.classList.toggle('sel', (s.dataset.hex || '') === (hex || '')));
+}
+function renderSwatches() {
+  const def = `<button class="sw def sel" data-hex="" title="Default"></button>`;
+  const sw = BAMBU_COLORS.map(([n,h]) =>
+    `<button class="sw" data-hex="${h}" title="${n}" style="background:${h}"></button>`).join('');
+  el('swatches').innerHTML = def + sw;
+  el('swatches').querySelectorAll('.sw').forEach(b => b.onclick = () => {
+    const hex = b.dataset.hex || null;
+    const name = hex ? BAMBU_COLORS.find(c => c[1] === hex)?.[0] : 'Default';
+    setActiveColour(hex, name);
+  });
+}
+function setPaint(on) {
+  paintMode = on;
+  el('btn-paint').classList.toggle('on', on);
+  el('btn-paint').textContent = on ? 'Paint: On' : 'Paint: Off';
+  renderer.domElement.style.cursor = on ? 'crosshair' : '';
+  if (on) { hover = null; refreshGhost(); }
+}
+el('btn-paint').onclick = () => setPaint(!paintMode);
+el('btn-paint-all').onclick = () => { if (state.length) commit(state.map(p => ({ ...p, color: activeColor }))); };
+el('colour-head').onclick = () => {
+  const open = el('colour-body').hidden;
+  el('colour-body').hidden = !open;
+  el('colour-head').classList.toggle('open', open);
+};
 
 function basketLines() {
   const counts = {};
@@ -1094,13 +1191,16 @@ function syncUI() {
   writeURL();
 }
 
+// Colour packs as a palette index (or 'd' for default) appended to each token.
+const colTok = hex => { const i = hex ? BAMBU_COLORS.findIndex(c => c[1] === hex) : -1; return i < 0 ? 'd' : i; };
+const colFrom = tok => (tok === undefined || tok === 'd') ? null : (BAMBU_COLORS[+tok]?.[1] || null);
 function writeURL() {
   if (!state.length) { history.replaceState(null,'',location.pathname); return; }
-  // lattice: <pi>.<i>.<j>.<k>.<o>   seated: s,<pi>,<px>,<py>,<pz>,<qx>,<qy>,<qz>,<qw>
+  // lattice: <pi>.<i>.<j>.<k>.<o>.<col>   seated: s,<pi>,<px>,<py>,<pz>,<qx>..<qw>,<col>
   // (seated uses ',' between fields because the floats contain '.' themselves)
   const packed = state.map(p => p.seat
-    ? ['s', PART_IDS.indexOf(p.id), ...p.seat.p, ...p.seat.q].join(',')
-    : [PART_IDS.indexOf(p.id), ...p.cell, p.orient].join('.')).join('_');
+    ? ['s', PART_IDS.indexOf(p.id), ...p.seat.p, ...p.seat.q, colTok(p.color)].join(',')
+    : [PART_IDS.indexOf(p.id), ...p.cell, p.orient, colTok(p.color)].join('.')).join('_');
   history.replaceState(null,'',`${location.pathname}?b=${btoa(packed).replace(/=+$/,'')}`);
 }
 function readURL() {
@@ -1109,11 +1209,12 @@ function readURL() {
   try {
     state = atob(b).split('_').map(s => {
       if (s[0] === 's') {
-        const n = s.split(',').slice(1).map(Number);
-        return { id: PART_IDS[n[0]], seat:{ p:n.slice(1,4), q:n.slice(4,8) } };
+        const t = s.split(',').slice(1);
+        return { id: PART_IDS[+t[0]], seat:{ p:t.slice(1,4).map(Number), q:t.slice(4,8).map(Number) },
+                 color: colFrom(t[8]) };
       }
-      const [pi,i,j,k,o] = s.split('.').map(Number);
-      return { id: PART_IDS[pi], cell:[i,j,k], orient:o };
+      const t = s.split('.');
+      return { id: PART_IDS[+t[0]], cell:[+t[1],+t[2],+t[3]], orient:+t[4], color: colFrom(t[5]) };
     }).filter(p => p.id);
   } catch { state = []; }
 }
@@ -1148,7 +1249,7 @@ function resize() {
 }
 addEventListener('resize', resize);
 
-renderPalette(); readURL(); rebuild(); syncUI(); resize();
+renderPalette(); renderSwatches(); readURL(); rebuild(); syncUI(); resize();
 
 // Debug handle — CRUX.state, CRUX.PARTS, CRUX.ORIENTATIONS.length
 window.CRUX = { scene, camera, renderer, controls, buildGroup, ghostGroup, THREE,
