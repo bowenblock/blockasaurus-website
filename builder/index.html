@@ -371,6 +371,20 @@ const PRICE = {
 // Cost modifiers by part family (1 = no change). Columns run 20% cheaper.
 const COST_MODIFIER = { column: 0.8 };
 
+// Print-time model (minutes) — used only for the basket's time total, NOT for
+// price (prices above are literals). The column cost modifier does NOT change
+// print time; it's a margin trade, so a column still prints at its real rate.
+const PRINT = {
+  cube1: 8.25, cube2: 30,          // small / large cube (any variety, incl. diagonals)
+  columnPerUnit: 10,               // per unit of height
+  plate4x4: 120, plate8x4: 240,    // wall mounts (double-sided same slab, same time)
+  facadePerCell: 2.5,              // 6×4 = 24 cells = 60 min = 1 h
+};
+const fmtTime = m => {
+  const h = Math.floor(m/60), mm = Math.round(m%60);
+  return h && mm ? `${h}h ${mm}m` : h ? `${h}h` : `${mm}m`;
+};
+
 function cubePart(scale, sideMale = []) {
   const S = scale === 2 ? 40 : 20, c = S/2;
   const M = scale === 2 ? M2 : M1, F = scale === 2 ? F2 : F1;
@@ -382,7 +396,7 @@ function cubePart(scale, sideMale = []) {
     const male = f === 2 || sideMale.includes(f);
     return conn(p, f, male ? 'm' : 'f', scale);
   });
-  return { cells, conns, size:[S,S,S], scale, price: scale===2?PRICE.cube2:PRICE.cube1 };
+  return { cells, conns, size:[S,S,S], scale, price: scale===2?PRICE.cube2:PRICE.cube1, minutes: scale===2?PRINT.cube2:PRINT.cube1 };
 }
 
 // 2x body in natural config, with ONE side face swapped for four 1x sockets —
@@ -400,7 +414,7 @@ function conversionPart() {
   ];
   // +Z face carries a 2x2 grid of 1x females at 20mm pitch
   for (const x of [10,30]) for (const y of [10,30]) conns.push(conn(V(x,y,S), 4, 'f', 1));
-  return { cells, conns, size:[S,S,S], scale:2, conversion:true, price: PRICE.cube2 };
+  return { cells, conns, size:[S,S,S], scale:2, conversion:true, price: PRICE.cube2, minutes: PRINT.cube2 };
 }
 
 // Column — 1×1×H in natural configuration.
@@ -423,7 +437,7 @@ function columnPart(h, scale = 1) {
     conns.push(conn(V(c, y, 0), 5, 'f', scale));   // -Z
   }
   return { cells, conns, size:[S,H,S], dims:[S,H,S], scale, column:true,
-           price: +(h * PRICE.columnPerUnit * COST_MODIFIER.column).toFixed(2) };
+           price: +(h * PRICE.columnPerUnit * COST_MODIFIER.column).toFixed(2), minutes: h * PRINT.columnPerUnit };
 }
 
 // Diagonal connector, from `diagonal connector 4.5_fixed.stl`.
@@ -465,7 +479,7 @@ function diagonalPart(scale = 1, hypMale = false) {
       conn(V(c,S,c), 2, 'm', scale),                  // male stud on top
       conn(V(0,c,c), 1, 'f', scale),                  // -X female
     ],
-    size:[S,S,S], scale, chamfered:true, price: scale===2?PRICE.cube2:PRICE.cube1,
+    size:[S,S,S], scale, chamfered:true, price: scale===2?PRICE.cube2:PRICE.cube1, minutes: scale===2?PRINT.cube2:PRINT.cube1,
   };
 }
 
@@ -489,7 +503,7 @@ function platePart(uw, uh, quincunx, doubleSided = false) {
   const conns = pts.map(([x,y]) => conn(V(x,y,U), 4, 'f', 2));
   if (doubleSided) pts.forEach(([x,y]) => conns.push(conn(V(x,y,U-PLATE_T), 5, 'f', 2, true)));
   return { cells, conns, size:[W,H,PLATE_T], scale:2, plate:true, socketCount:pts.length, doubleSided,
-           price: (uw===8?PRICE.plate8x4:PRICE.plate4x4) };
+           price: (uw===8?PRICE.plate8x4:PRICE.plate4x4), minutes: (uw===8?PRINT.plate8x4:PRINT.plate4x4) };
 }
 
 // Plain facade — a thin decorative panel, 1× (20mm) units, that MOUNTS onto a
@@ -503,7 +517,7 @@ function facadePart(uw, uh) {
   for (let i=0;i<uw;i++) for (let j=0;j<uh;j++)
     conns.push(conn(V(i*U+U/2, j*U+U/2, 0), 5, 'm', 1));   // back-face stud, one per unit
   return { cells, conns, size:[W,H,FACADE_T], scale:1, facade:true, socketCount:uw*uh,
-           price: +(uw*uh * PRICE.facadePerUnit).toFixed(2) };
+           price: +(uw*uh * PRICE.facadePerUnit).toFixed(2), minutes: uw*uh * PRINT.facadePerCell };
 }
 
 const PARTS = {
@@ -1141,7 +1155,7 @@ function basketLines() {
   const counts = {};
   state.forEach(p => counts[p.id] = (counts[p.id]||0)+1);
   return Object.entries(counts).map(([id,qty]) => ({ id, qty, ...PARTS[id],
-    sub: +(qty*PARTS[id].price).toFixed(2) }));
+    sub: +(qty*PARTS[id].price).toFixed(2), mins: qty*(PARTS[id].minutes||0) }));
 }
 function islandCount() {
   if (!state.length) return 0;
@@ -1165,6 +1179,7 @@ function islandCount() {
 function syncUI() {
   const lines = basketLines();
   const total = +lines.reduce((s,l)=>s+l.sub,0).toFixed(2);
+  const mins = lines.reduce((s,l)=>s+l.mins,0);
   el('bk-count').textContent = `${state.length} PART${state.length===1?'':'S'}`;
   el('bk-lines').innerHTML = lines.length
     ? lines.map(l => `<div class="line"><span class="lq">${l.qty}×</span>
@@ -1172,10 +1187,9 @@ function syncUI() {
         <span>$${l.sub.toFixed(2)}</span></div>`).join('')
     : '<div class="empty-note">Nothing placed yet.</div>';
   const islands = islandCount();
-  // CONSUMER-FACING: prices only — no production data. The "large build" note
-  // keys off part count, not print time, so nothing costing-related is exposed.
   el('bk-totals').innerHTML = total ? `
     <div class="trow"><span style="color:var(--muted)">Subtotal</span><span>$${total.toFixed(2)}</span></div>
+    <div class="trow"><span style="color:var(--muted)">Print time</span><span>${fmtTime(mins)}</span></div>
     <div class="trow"><span style="color:var(--muted)">Shipping</span><span>calculated at checkout</span></div>
     <div class="trow big"><span>Total</span><span class="v">$${total.toFixed(2)}</span></div>
     ${state.length >= 40 ? `<div class="warn">Large build — made to order, please allow extra production time.</div>` : ''}
