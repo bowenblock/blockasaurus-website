@@ -193,6 +193,7 @@ const M1 = CONN(U),    F1 = CONN(U);
 const M2 = CONN(U*2),  F2 = CONN(U*2), FW = CONN(U*2);
 const SOCKET_DEPTH = 2.4, SOCKET_LIFT = 0.06;
 const PLATE_T = 6;                                    // 2x plate visual thickness
+const FACADE_T = 4;                                   // 1x facade panel thickness
 
 // 18 connector directions: 0-5 the cube faces, 6-17 the edge diagonals.
 // Diagonal parts (`diagonal connector*.stl`) carry a 45° wall whose normal is
@@ -338,6 +339,7 @@ const PRICE = {
   cube1: 2.75, cube2: 10.00,          // small / large cube (any variety, incl. diagonals)
   columnPerUnit: 3.3333,              // × height in units
   plate4x4: 40.00, plate8x4: 80.00,   // wall mounts
+  facadePerUnit: 1.50,                // × unit cells — PLACEHOLDER, no facade print time yet
 };
 
 function cubePart(scale, sideMale = []) {
@@ -461,6 +463,20 @@ function platePart(uw, uh, quincunx, doubleSided = false) {
            price: (uw===8?PRICE.plate8x4:PRICE.plate4x4) };
 }
 
+// Plain facade — a thin decorative panel, 1× (20mm) units, that MOUNTS onto a
+// wall face. A wall of cubes shows female sockets, so the facade carries a male
+// stud per unit on its back (-Z) to plug in; the front (+Z) is the plain face.
+function facadePart(uw, uh) {
+  const W = uw*U, H = uh*U;
+  const cells = [];
+  for (let i=0;i<uw;i++) for (let j=0;j<uh;j++) cells.push([i,j,0]);
+  const conns = [];
+  for (let i=0;i<uw;i++) for (let j=0;j<uh;j++)
+    conns.push(conn(V(i*U+U/2, j*U+U/2, 0), 5, 'm', 1));   // back-face stud, one per unit
+  return { cells, conns, size:[W,H,FACADE_T], scale:1, facade:true, socketCount:uw*uh,
+           price: +(uw*uh * PRICE.facadePerUnit).toFixed(2) };
+}
+
 const PARTS = {
   'CX-1N':  { group:'Cubes — 1× (20mm)', name:'Cube — Natural', desc:'Male top, sockets on five faces',
               ...cubePart(1) },
@@ -502,6 +518,16 @@ const PARTS = {
               ...platePart(8,4,false,true) },
   'WM-8x4Q-DS': { group:'Wall Mounts — Double-Sided', name:'Wall Mount 8×4 Quincunx — Double-Sided', desc:'320×160mm · 53 sockets both faces',
               ...platePart(8,4,true,true) },
+  'FAC-1x1': { group:'Facades — 1× (20mm)', name:'Facade 1×1', desc:'20×20mm · plain panel',
+              ...facadePart(1,1) },
+  'FAC-4x2': { group:'Facades — 1× (20mm)', name:'Facade 4×2', desc:'80×40mm · plain panel',
+              ...facadePart(4,2) },
+  'FAC-4x4': { group:'Facades — 1× (20mm)', name:'Facade 4×4', desc:'80×80mm · plain panel',
+              ...facadePart(4,4) },
+  'FAC-6x4': { group:'Facades — 1× (20mm)', name:'Facade 6×4', desc:'120×80mm · plain panel',
+              ...facadePart(6,4) },
+  'FAC-8x4': { group:'Facades — 1× (20mm)', name:'Facade 8×4', desc:'160×80mm · plain panel',
+              ...facadePart(8,4) },
 };
 // Every price is DERIVED from print time — never set one by hand.
 const PART_IDS = Object.keys(PARTS);
@@ -751,6 +777,12 @@ for (const [id, def] of Object.entries(PARTS)) {
   if (def.plate) {
     const b = new THREE.BoxGeometry(def.size[0], def.size[1], PLATE_T);
     b.translate(def.size[0]/2, def.size[1]/2, U - PLATE_T/2);   // flush to cell front
+    bodies.push(b);
+  } else if (def.facade) {
+    // toNonIndexed(): the studs merged into `bodies` are non-indexed ExtrudeGeometry,
+    // and mergeGeometries can't mix an indexed BoxGeometry with them.
+    const b = new THREE.BoxGeometry(def.size[0], def.size[1], FACADE_T).toNonIndexed();
+    b.translate(def.size[0]/2, def.size[1]/2, FACADE_T/2);      // panel at the back, studs behind it
     bodies.push(b);
   } else if (def.chamfered) {
     bodies.push(chamferedCubeGeometry(def.size[0]));
