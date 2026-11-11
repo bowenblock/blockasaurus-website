@@ -1720,6 +1720,7 @@ function vnShow({name,look,romance,line,opts,mood,date}){
 }
 // ---------------- render ----------------
 function render(){
+  if(!cv.width||!cv.height||!CW||!CH){resize();if(!cv.width||!cv.height)return}
   const key=[cv.width,cv.height,u.toFixed(3),MAXPAN.toFixed(1)].join();
   if(BGkey!==key){BG=document.createElement('canvas');BG.width=Math.round(cv.width+2*MAXPAN*DPR);BG.height=cv.height;const c=BG.getContext('2d');c.setTransform(DPR,0,0,DPR,0,0);
     const sv=[CW,ox];CW=CW+2*MAXPAN;ox=BASEOX+MAXPAN;withCtx(c,drawStatic);CW=sv[0];ox=sv[1];BGkey=key}
@@ -1832,7 +1833,7 @@ function frame(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;T+=dt;
   const dx=BELLA.tx-BELLA.x,dy=BELLA.ty-BELLA.y,dd=Math.hypot(dx,dy);if(dd>.02){const s=Math.min(dd,3.2*dt);BELLA.x+=dx/dd*s;BELLA.y+=dy/dd*s}else if(phase==='day'&&Math.random()<.003){BELLA.tx=2.3;BELLA.ty=2.6}
   if(phase==='day'&&!paused&&!talking){for(let i=0;i<SPEED&&phase==='day';i++)stepDay(dt);if(phase==='day'){renderTray();hudT+=dt;if(hudT>.25){hudT=0;updateHud()}}}
-  stepFx(dt);render();
+  stepFx(dt);try{render()}catch(e){console.error(e)}
   requestAnimationFrame(frame);
 }
 window.BB={draw(){resize();render()},get chatHits(){return chatHits.map(h=>[h[0].who,Math.round(h[1]),Math.round(h[2]),Math.round(h[3])])},get cam(){return {u,ox,oy,CW,CH}},get S(){return S},get D(){return D},get phase(){return phase},set speed(v){SPEED=v},tapAt,tick(sec){for(let s=0;s<sec&&phase==='day';s+=.05){if(!talking)stepDay(.05);const dx=BELLA.tx-BELLA.x,dy=BELLA.ty-BELLA.y,dd=Math.hypot(dx,dy);if(dd>.02){const m=Math.min(dd,.16);BELLA.x+=dx/dd*m;BELLA.y+=dy/dd*m}}},serveAll(){D.customers.filter(c=>c.state==='wait'&&canServe(c)).forEach(serve)},startChat,startDate,startBake,collectOven,waterBucket,
