@@ -28,7 +28,7 @@
       </div>
     </header>
 
-    <p class="muted">Effective date: May 6, 2026 · Last updated: October 16, 2026</p>
+    <p class="muted">Effective date: May 6, 2026 · Last updated: November 19, 2026</p>
 
     <p>
       This Privacy Policy explains how Blockasaurus ("Blockasaurus", "we", "us",
@@ -37,9 +37,10 @@
       portals such as CrazyGames, and the
       <a href="https://blockasaurus.com">blockasaurus.com</a> website
       (together, the "Services"). It applies to all current and future
-      Blockasaurus games, including <strong>Snow Raiders</strong>, our current
-      release on the Apple App Store
-      (bundle ID <code>com.Blockasaurus.SnowRaiders</code>).
+      Blockasaurus games, including <strong>Snow Raiders</strong>
+      (<code>com.Blockasaurus.SnowRaiders</code>) and
+      <strong>Exodus: Starship Survivors</strong>
+      (<code>com.Blockasaurus.StarshipSurvivors</code>).
     </p>
 
     <p>
@@ -70,6 +71,11 @@
         Advertisers (IDFA) on iOS and the Google Advertising ID (GAID) on
         Android. These are only used if you have granted the relevant
         permissions on your device. See <a href="#choices">Section 7</a>.</li>
+      <li><strong>Install attribution data.</strong> Which advertising
+        campaign, ad network, and ad (if any) led to your install, the install
+        and first-open time, and your IP address at install. Our attribution
+        provider uses the IP address to match the install to an ad and to
+        detect fraud; see <a href="#appsflyer">AppsFlyer</a> in Section 4.</li>
       <li><strong>Gameplay events.</strong> Events such as starting a level,
         completing or failing a level, equipping a hat, purchasing an upgrade,
         completing a quest, watching a rewarded ad, completing the first-time
@@ -114,6 +120,7 @@
       <li>Diagnose crashes and fix bugs (see <a href="#crashlytics">Section 4 — Crashlytics</a>)</li>
       <li>Analyze how players engage with our games so we can balance levels, identify drop-off points, and prioritize fixes</li>
       <li>Calculate lifetime revenue from in-app purchases and ad impressions, so we can understand whether our games are sustainable</li>
+      <li>Measure which of our own ad campaigns brought players to our games, and tell the ad networks we buy ads from (Meta and Google) which installs and in-game milestones their ads produced, so they can show our ads to people likely to enjoy the game</li>
       <li>Serve relevant advertisements through Google AdMob (subject to your consent on iOS and in the EEA, UK, and Switzerland)</li>
       <li>Detect, investigate, and prevent fraud, abuse, and security incidents</li>
       <li>Comply with our legal obligations</li>
@@ -127,7 +134,7 @@
     </p>
     <ul>
       <li><strong>Consent</strong> for personalized advertising, advertising
-        identifiers, and analytics events. You provide this through Google's
+        identifiers, install attribution, and analytics events. You provide this through Google's
         UMP consent form on first launch, and you can change your mind at any
         time via <strong>Settings → Privacy Options</strong> inside the game.</li>
       <li><strong>Legitimate interests</strong> for crash reporting, security,
@@ -204,6 +211,45 @@
       <a href="https://support.google.com/admob/answer/6128543">AdMob and AdSense personalized vs. non-personalized ads</a>
     </p>
 
+    <h3 id="appsflyer">AppsFlyer</h3>
+    <p>
+      AppsFlyer is our mobile measurement partner. It tells us which ad
+      campaign, if any, led to an install, and lets us compare our campaigns
+      by results. Our mobile games send AppsFlyer the install and launch, the
+      device and technical data and identifiers listed in Section 1, and a
+      small set of in-game events: completing the tutorial, your first few
+      runs after the tutorial, winning a level, in-app purchases (product,
+      price, and currency), and the value of ads shown. AppsFlyer does not
+      receive your name, email, or saved progress.
+    </p>
+    <p>
+      If you decline consent in the EEA, UK, or Switzerland, the game tells
+      AppsFlyer to anonymize your data and stops it collecting advertising
+      identifiers. On iOS, AppsFlyer only receives the IDFA if you allow
+      tracking. Browser versions of our games do not include AppsFlyer.
+    </p>
+    <p>
+      <a href="https://www.appsflyer.com/legal/services-privacy-policy/" rel="noopener" target="_blank">AppsFlyer services privacy policy</a>
+    </p>
+
+    <h3 id="ad-networks">Advertising networks we buy ads from (Meta, Google Ads)</h3>
+    <p>
+      We advertise our games on Meta (Facebook and Instagram) and Google Ads.
+      Our games do not include the Meta (Facebook) SDK. Instead, when an
+      install came from one of their ads, AppsFlyer reports it to that
+      network, together with the in-game events listed above, so the network
+      can measure and improve the ads' performance. This may include your
+      advertising identifier if you consented to tracking. Google Ads also
+      receives these events through the Firebase Analytics link. We share no
+      contact details. Each network processes this data under its own
+      privacy policy and terms.
+    </p>
+    <p>
+      <a href="https://www.facebook.com/privacy/policy/" rel="noopener" target="_blank">Meta privacy policy</a>
+      ·
+      <a href="https://policies.google.com/privacy" rel="noopener" target="_blank">Google privacy policy</a>
+    </p>
+
     <h3>Google User Messaging Platform (UMP)</h3>
     <p>
       Used to display the GDPR consent form to players in the EEA, UK, and
@@ -252,6 +298,9 @@
     <ul>
       <li><strong>With the service providers listed in Section 4</strong>,
         and only as necessary for them to perform the function they provide.</li>
+      <li><strong>With the ad networks we buy ads from</strong> (Meta and
+        Google), through AppsFlyer and Firebase, to measure our ad campaigns
+        as described in <a href="#ad-networks">Section 4</a>.</li>
       <li><strong>With platform providers</strong> (Apple, Google) as required
         for app distribution, in-app purchases, and platform-level services
         such as Game Center, and with web game portals (such as CrazyGames)
@@ -293,7 +342,9 @@
     <p>
       The first time you launch one of our games in the EEA, UK, or
       Switzerland, Google's UMP consent form appears. You can grant or
-      decline consent for personalized advertising. You can re-open this
+      decline consent for personalized advertising and install attribution.
+      If you decline, AppsFlyer data is anonymized and advertising
+      identifiers are not collected. You can re-open this
       form at any time by going to <strong>Settings → Privacy Options</strong>
       inside the game.
     </p>
